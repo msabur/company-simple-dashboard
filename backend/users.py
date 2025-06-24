@@ -16,7 +16,7 @@ def checkEmail(email: EmailStr, db: Session = Depends(get_db)):
     else:
         return {'exists': True}
 
-@router.post("/signup", response_model=schemas.UserOut)
+@router.post("/signup")
 def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(models.User).filter_by(email=user.email).first()
     if existing_user:

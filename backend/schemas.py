@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, ConfigDict, field_validator, field_serializer
+from typing import List, Optional
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -53,10 +54,47 @@ class UpdateInfoRequest(BaseModel):
 
     # Convert empty strings to None for database
 
-    @field_validator('*', mode="after")
+    @field_validator('*', mode="before")
     @classmethod
     def empty_string_to_none(cls, v):
         if isinstance(v, str):
             return None if v == "" else v
         else:
             return v
+
+class OrganizationBase(BaseModel):
+    name: str
+
+class OrganizationCreate(OrganizationBase):
+    pass
+
+class OrganizationOut(OrganizationBase):
+    id: int
+    name: str
+    created_by_user_id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class OrganizationMemberBase(BaseModel):
+    role: str
+
+class OrganizationMemberCreate(OrganizationMemberBase):
+    user_id: int
+    organization_id: int
+
+class OrganizationMemberOut(OrganizationMemberBase):
+    id: int
+    user_id: int
+    organization_id: int
+    # Optionally include user info
+    user: Optional[UserOut] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class OrganizationWithMembers(OrganizationOut):
+    members: List[OrganizationMemberOut] = []
+    current_user_role: str
+
+class OrganizationWithRole(OrganizationOut):
+    user_role: str
