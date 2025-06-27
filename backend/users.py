@@ -4,17 +4,15 @@ from database import SessionLocal, get_db
 import models, schemas, auth
 from pydantic import EmailStr
 
-router = APIRouter()
+router = APIRouter(tags=["users"])
 
 @router.get("/check-email")
 def checkEmail(email: EmailStr, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter_by(email=email).first()
     if db_user is None:
-        return {'exists': False}
-    elif db_user.is_google_user:
-        return {'exists': False, 'isGoogleUser': True}
+        return {'exists': False, 'isSocialUser': False}
     else:
-        return {'exists': True}
+        return {'exists': True, 'isSocialUser': db_user.auth_provider != "local"}
 
 @router.post("/signup")
 def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -29,7 +27,6 @@ def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         full_name=user.full_name,
         username=user.username,
         password_hash=auth.hash_password(user.password),
-        is_google_user=False,
     )
     db.add(db_user)
     db.commit()
@@ -50,20 +47,21 @@ def google_auth(payload: schemas.GoogleAuthRequest, db: Session = Depends(get_db
     user_data = auth.verify_google_token(payload.token)
     if not user_data or "email" not in user_data:
         raise HTTPException(status_code=400, detail="Invalid Google token")
-    
     db_user = db.query(models.User).filter_by(email=user_data["email"]).first()
-    if not db_user:
+    if db_user:
+        if db_user.auth_provider != "google":
+            raise HTTPException(status_code=400, detail="Account exists with a different provider")
+    else:
         db_user = models.User(
             email=user_data["email"],
             full_name=user_data.get("name", ""),
             username=user_data["email"].split("@")[0],
-            is_google_user=True,
+            auth_provider="google",
             picture_url=user_data.get("picture", "")
         )
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-
     token = auth.create_token({"user_id": db_user.id})
     return {"token": token, "user": schemas.UserOut.model_validate(db_user)}
 

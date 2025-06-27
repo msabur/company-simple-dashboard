@@ -7,14 +7,22 @@ import models
 from database import engine
 from users import router as user_router
 from organizations import router as org_router
+from github_auth import router as github_router
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+origins = [
+    "http://localhost",
+    "http://localhost:5173",
+    "http://127.0.0.1",
+    "http://127.0.0.1:5173",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*']
@@ -22,4 +30,5 @@ app.add_middleware(
 
 app.include_router(user_router)
 app.include_router(org_router)
+app.include_router(github_router)
 

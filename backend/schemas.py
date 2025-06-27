@@ -18,7 +18,7 @@ class UserOut(BaseModel):
     timezone: str | None
     date_of_birth: datetime | None
     picture_url: str
-    is_google_user: bool
+    auth_provider: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -77,7 +77,7 @@ class OrganizationOut(OrganizationBase):
     model_config = ConfigDict(from_attributes=True)
 
 class OrganizationMemberBase(BaseModel):
-    role: str
+    roles: List[str]
 
 class OrganizationMemberCreate(OrganizationMemberBase):
     user_id: int
@@ -94,7 +94,28 @@ class OrganizationMemberOut(OrganizationMemberBase):
 
 class OrganizationWithMembers(OrganizationOut):
     members: List[OrganizationMemberOut] = []
-    current_user_role: str
+    current_user_roles: List[str]
 
 class OrganizationWithRole(OrganizationOut):
-    user_role: str
+    user_roles: List[str]
+
+class OrganizationInviteBase(BaseModel):
+    max_uses: int = 1
+    expires_at: Optional[datetime] = None
+
+class OrganizationInviteCreate(OrganizationInviteBase):
+    target_username: Optional[str] = None
+
+class OrganizationInviteOut(OrganizationInviteBase):
+    id: int
+    code: str
+    uses: int
+    created_at: datetime
+    org_id: int
+    organization: Optional[OrganizationOut] = None
+    target_user_id: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class OrganizationInviteAccept(BaseModel):
+    code: str
