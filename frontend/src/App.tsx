@@ -5,6 +5,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import AuthPage from "./pages/AuthPage";
 import { HomePage } from "./pages/HomePage";
 import { authStore } from "./store/authStore";
+import GithubCallbackPage from "./pages/GithubCallbackPage";
 
 import "./index.css";
 
@@ -32,6 +33,9 @@ export default observer(function App() {
           <Switch>
             <Route path="/auth">
               <AuthPage />
+            </Route>
+            <Route path="/auth/github/callback">
+              <GithubCallbackPage />
             </Route>
             <Route>
               <HomePage />

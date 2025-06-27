@@ -30,7 +30,18 @@ export async function googleAuth({ token }: { token: string }) {
     return res.json();
 }
 
-export async function checkEmail(email: string): Promise<{ exists: boolean; isGoogleUser?: boolean }> {
+// GitHub OAuth: exchange code for token
+export async function githubAuth({ code }: { code: string }) {
+    const res = await fetch(`${BASE_URL}/auth/github`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code })
+    });
+    if (!res.ok) throw new Error("GitHub auth failed");
+    return res.json();
+}
+
+export async function checkEmail(email: string): Promise<{ exists: boolean; isSocialUser: boolean }> {
     const res = await fetch(`${BASE_URL}/check-email?email=${encodeURIComponent(email)}`);
     if (!res.ok) throw new Error("Failed to check email");
     return res.json();

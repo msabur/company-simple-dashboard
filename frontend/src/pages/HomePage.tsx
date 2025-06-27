@@ -10,11 +10,14 @@ import {
   createOrganization,
   joinOrganization,
   getOrganizationMembers,
-  updateMemberRole,
+  // updateMemberRole,
   removeMember,
   getJoinableOrganizations,
   leaveOrganization,
 } from "../api/org";
+import { updateMemberRoles } from "../api/org";
+import { listUserInvites, acceptInvite } from "../api/org";
+import { listOrgInvites, createOrgInvite, revokeOrgInvite } from "../api/org";
 
 const TABS = [
   { key: "dashboard", label: "Dashboard", icon: (
@@ -34,6 +37,9 @@ const TABS = [
   ) },
   { key: "users", label: "Users", icon: (
     <svg width="20" height="20" fill="none" stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a4.5 4.5 0 0 1 9 0v2"/><path d="M17.5 21v-2a4.5 4.5 0 0 0-9 0v2"/></svg>
+  ) },
+  { key: "invitations", label: "Invitations", icon: (
+    <svg width="20" height="20" fill="none" stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/><path d="M12 15l3-3-3-3-3 3z"/></svg>
   ) },
 ];
 
@@ -90,6 +96,7 @@ function DashboardTab({ setTab }: { setTab: (tab: string) => void }) {
             )}
           </div>
           <div className="user-info-name">{authStore.user?.full_name}</div>
+          <div className="user-info-username">{authStore.user?.username}</div>
           <div className="user-info-email">{authStore.user?.email}</div>
         </div>
         <div className="dashboard-card dashboard-link-card" onClick={() => setTab("security")}> 
@@ -126,7 +133,7 @@ function ProfileTab() {
   const [dob, setDob] = useState(user?.date_of_birth || "");
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
-  const isGoogleUser = user?.is_google_user;
+  const isSocialAccount = user?.auth_provider !== "local";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,9 +174,9 @@ function ProfileTab() {
         </div>
         <div className="profile-form-col">
           <label htmlFor="profile-email">Email Address</label>
-          <input id="profile-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" disabled={isGoogleUser} />
-          {isGoogleUser && (
-            <div className="google-user-hint" style={{marginBottom: '0.5rem'}}>You sign in with your Google account, so your email address cannot be changed here.</div>
+          <input id="profile-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" disabled={isSocialAccount} />
+          {isSocialAccount && (
+            <div className="social-user-hint" style={{marginBottom: '0.5rem'}}>You sign in with a social account, so your email address cannot be changed here.</div>
           )}
 
           <label htmlFor="profile-language">Language</label>
@@ -199,7 +206,7 @@ function SecurityTab() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const isGoogleUser = authStore.user?.is_google_user;
+  const isSocialAccount = authStore.user?.auth_provider !== "local";
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
@@ -223,19 +230,19 @@ function SecurityTab() {
   return (
     <div className="tab-content security-tab">
       <h3>Change Password</h3>
-      {isGoogleUser && (
-        <div className="google-user-hint">
-          You sign in with your Google account, so you don't have a password with us. You may update your password in your Google Account settings.
+      {isSocialAccount && (
+        <div className="social-user-hint">
+          You sign in with a social account, so you don't have a password with us. You may update your password in your Google Account settings.
         </div>
       )}
       <form className="password-change-form" onSubmit={handleSubmit}>
         <label htmlFor="oldPassword">Current Password</label>
-        <input type="password" id="oldPassword" value={oldPassword} onChange={e => setOldPassword(e.target.value)} required disabled={isGoogleUser} />
+        <input type="password" id="oldPassword" value={oldPassword} onChange={e => setOldPassword(e.target.value)} required disabled={isSocialAccount} />
         <label htmlFor="newPassword">New Password</label>
-        <input type="password" id="newPassword" value={newPassword} onChange={e => setNewPassword(e.target.value)} required disabled={isGoogleUser} />
+        <input type="password" id="newPassword" value={newPassword} onChange={e => setNewPassword(e.target.value)} required disabled={isSocialAccount} />
         <label htmlFor="confirmPassword">Confirm New Password</label>
-        <input type="password" id="confirmPassword" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required disabled={isGoogleUser} />
-        <button type="submit" disabled={isGoogleUser || loading}>
+        <input type="password" id="confirmPassword" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required disabled={isSocialAccount} />
+        <button type="submit" disabled={isSocialAccount || loading}>
           {loading ? "Updating..." : "Update Password"}
         </button>
       </form>
@@ -266,6 +273,7 @@ function OrgsTab() {
     setError("");
     try {
       const data = await getMyOrganizations();
+      console.log(orgs)
       setOrgs(data);
     } catch (e: any) {
       setError(e.message || "Failed to load organizations");
@@ -329,7 +337,11 @@ function OrgsTab() {
         await fetchJoinableOrgs();
         setMessage("Left organization!");
       } catch (e: any) {
-        setMessage(e.message || "Failed to leave organization");
+        if (e.status === 403 || e.message?.includes("403")) {
+          setMessage("You cannot leave this organization because you have required roles (e.g., admin). Please transfer your roles or contact another admin.");
+        } else {
+          setMessage(e.message || "Failed to leave organization");
+        }
       } finally {
         setPendingLeave(prev => {
           const newSet = new Set(prev);
@@ -376,18 +388,26 @@ function OrgsTab() {
         <div>No organizations found.</div>
       ) : (
         <ul className="orgs-list">
-          {filteredOrgs.map((org: any) => (
-            <li key={org.id}>
-              <div>
-                <b>{org.name}</b> <span className="orgs-role-label">({org.user_role})</span>
-              </div>
-              { org.user_role !== "admin" && (
-                <button className="org-btn org-btn-danger" onClick={() => handleLeave(Number(org.id))} type="button">
-                  {pendingLeave.has(org.id) ? "Sure?" : "Leave Organization"}
-                </button>
-              )}
-            </li>
-          ))}
+          {filteredOrgs.map((org: any) => {
+            const roles = Array.isArray(org.user_roles) ? org.user_roles : (org.user_roles ? [org.user_roles] : []);
+            const isAdmin = roles.includes("admin");
+            return (
+              <li key={org.id}>
+                <div>
+                  <b>{org.name}</b> <span className="orgs-role-label">({roles.join(", ")})</span>
+                </div>
+                {isAdmin ? (
+                  <button className="org-btn org-btn-danger" type="button" disabled title="Admins cannot leave the organization without transferring authority or removing the admin role.">
+                    Leave Organization
+                  </button>
+                ) : (
+                  <button className="org-btn org-btn-danger" onClick={() => handleLeave(Number(org.id))} type="button">
+                    {pendingLeave.has(org.id) ? "Sure?" : "Leave Organization"}
+                  </button>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
       <div className="orgs-actions-row">
@@ -432,9 +452,26 @@ function UsersTab() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [showInvites, setShowInvites] = useState(false);
+  const [invites, setInvites] = useState<any[]>([]);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const [showNewInvite, setShowNewInvite] = useState(false);
+  const [inviteTargetUser, setInviteTargetUser] = useState("");
+  const [inviteMaxUses, setInviteMaxUses] = useState(1);
+  const [inviteExpiresAt, setInviteExpiresAt] = useState("");
+  const [inviteCreateMsg, setInviteCreateMsg] = useState("");
+  const [createdInvite, setCreatedInvite] = useState<any>(null);
 
   useEffect(() => {
-    getMyOrganizations().then(setOrgs).catch(() => setOrgs([]));
+    getMyOrganizations()
+      .then(orgsResult => {
+        setOrgs(orgsResult);
+        if (orgsResult?.length == 1) {
+          setSelectedOrg(orgsResult[0])
+        }
+      })
+      .catch(() => setOrgs([]));
   }, []);
 
   const fetchMembers = async (orgId: number) => {
@@ -442,10 +479,6 @@ function UsersTab() {
     setError("");
     try {
       const data = await getOrganizationMembers(orgId);
-      console.log("members", data);
-      console.log(data.map((m: any) => (
-        `${m.user.username} === ${authStore.user?.username} is ${m.user.username === authStore.user?.username}`
-      )))
       setMembers(data);
     } catch (e: any) {
       setError(e.message || "Failed to load members");
@@ -455,17 +488,21 @@ function UsersTab() {
   };
 
   useEffect(() => {
-    if (selectedOrg) fetchMembers(selectedOrg.id);
+    if (selectedOrg) {
+      fetchMembers(selectedOrg.id);
+    } else {
+      setMembers([]);
+    }
   }, [selectedOrg]);
 
-  const handleRoleChange = async (userId: number, role: string) => {
+  const handleRolesChange = async (userId: number, roles: string[]) => {
     if (!selectedOrg) return;
     try {
-      await updateMemberRole(selectedOrg.id, userId, role);
+      await updateMemberRoles(selectedOrg.id, userId, roles);
       fetchMembers(selectedOrg.id);
-      setMessage("Role updated");
+      setMessage("Roles updated");
     } catch (e: any) {
-      setMessage(e.message || "Failed to update role");
+      setMessage(e.message || "Failed to update roles");
     }
   };
 
@@ -480,6 +517,55 @@ function UsersTab() {
     }
   };
 
+  const fetchInvites = async () => {
+    if (!selectedOrg) return;
+    setInviteLoading(true);
+    setInviteError("");
+    try {
+      const data = await listOrgInvites(selectedOrg.id);
+      setInvites(data);
+    } catch (e: any) {
+      setInviteError(e.message || "Failed to load invites");
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
+  const handleCreateInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInviteCreateMsg("");
+    setCreatedInvite(null);
+    try {
+      const payload: any = { max_uses: inviteMaxUses };
+      if (inviteTargetUser) payload.target_username = inviteTargetUser;
+      if (inviteExpiresAt) payload.expires_at = inviteExpiresAt;
+      const invite = await createOrgInvite(selectedOrg.id, payload);
+      setCreatedInvite(invite);
+      setInviteCreateMsg("Invite created!");
+      fetchInvites();
+
+      setInviteTargetUser("");
+      setInviteExpiresAt("");
+      setInviteMaxUses(1);
+      setShowNewInvite(false);
+    } catch (e: any) {
+      setInviteCreateMsg(e.message || "Failed to create invite");
+    }
+  };
+
+  const handleRevokeInvite = async (inviteId: number) => {
+    if (!selectedOrg) return;
+    try {
+      await revokeOrgInvite(selectedOrg.id, inviteId);
+      fetchInvites();
+    } catch {}
+  };
+
+  // Find current user's roles in selected org
+  const myOrgEntry = selectedOrg && Array.isArray(selectedOrg.user_roles) ? selectedOrg : orgs.find((o: any) => o.id === selectedOrg?.id);
+  const myRoles = myOrgEntry && Array.isArray(myOrgEntry.user_roles) ? myOrgEntry.user_roles : [];
+  const isAdmin = myRoles.includes("admin");
+
   return (
     <div className="tab-content orgs-tab">
       <h3>Users</h3>
@@ -487,10 +573,11 @@ function UsersTab() {
         <select className="users-dropdown" value={selectedOrg?.id || ""} onChange={e => {
           const org = orgs.find((o: any) => o.id === Number(e.target.value));
           setSelectedOrg(org);
+          fetchInvites();
         }}>
           <option value="">Select organization</option>
           {orgs.map((org: any) => (
-            <option key={org.id} value={org.id}>{org.name} ({org.user_role})</option>
+            <option key={org.id} value={org.id}>{org.name} ({Array.isArray(org.user_roles) ? org.user_roles.join(", ") : org.user_roles || org.user_role})</option>
           ))}
         </select>
       </div>
@@ -506,12 +593,13 @@ function UsersTab() {
             <tr>
               <th>Name</th>
               <th>Email</th>
-              <th>Role</th>
+              <th>Roles</th>
             </tr>
           </thead>
           <tbody>
             {members.map((m: any) => {
               const isMe = m.user.username === authStore.user?.username;
+              const roles = Array.isArray(m.roles) ? m.roles : (m.roles ? [m.roles] : []);
               return (
                 <tr key={m.user_id}>
                   <td>
@@ -520,17 +608,22 @@ function UsersTab() {
                   </td>
                   <td>{m.user?.email}</td>
                   <td>
-                    <span style={{ color: "#64748b", fontSize: ".97em" }}>({m.role})</span>
-                    {selectedOrg?.user_role === "admin" && (
+                    <span style={{ color: "#64748b", fontSize: ".97em" }}>
+                      {roles.join(", ")}
+                    </span>
+                    {isAdmin && !isMe && (
                       <span className="users-actions-row" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", marginLeft: 8, gap: 4 }}>
-                        <select className="users-role-select" value={m.role} onChange={e => handleRoleChange(m.user_id, e.target.value)} disabled={isMe}>
-                          <option value="member">Member</option>
-                          <option value="admin">Admin</option>
-                        </select>
-                        {!isMe && m.role !== "admin" && (
+                        <RoleCheckboxes
+                          roles={roles}
+                          onChange={roles => handleRolesChange(m.user_id, roles)}
+                        />
+                        {!roles.includes("admin") && (
                           <button className="org-btn org-btn-danger" onClick={() => handleKick(m.user_id)} type="button" style={{ marginTop: 4 }}>Kick</button>
                         )}
                       </span>
+                    )}
+                    {isMe && isAdmin && (
+                      <span style={{ color: '#64748b', fontSize: '.95em', marginLeft: 8 }} title="You cannot remove your own admin role here for safety."> (admin cannot self-edit)</span>
                     )}
                   </td>
                 </tr>
@@ -538,6 +631,190 @@ function UsersTab() {
             })}
           </tbody>
         </table>
+      )}
+      {message && <div className="form-status-message">{message}</div>}
+      {isAdmin && selectedOrg && (
+        <div style={{ margin: '16px 0' }}>
+          <button className="org-btn" onClick={() => { setShowInvites(v => !v); if (!showInvites) fetchInvites(); }}>
+            {showInvites ? "Hide Invites" : "Manage Invites"}
+          </button>
+          {showInvites && (
+            <div className="org-invites-panel" style={{ marginTop: 12, border: '1px solid #e5e7eb', borderRadius: 8, padding: 12 }}>
+              <h4>Organization Invites</h4>
+              {inviteLoading ? <div>Loading...</div> : inviteError ? <div className="form-status-message error-message">{inviteError}</div> : (
+                <ul style={{ marginBottom: 12 }}>
+                  {invites.length === 0 ? <li>No invites</li> : invites.map(invite => (
+                    <li key={invite.id} style={{ marginBottom: 6 }}>
+                      <span style={{ fontFamily: 'monospace' }}>{invite.code}</span> (uses: {invite.uses}/{invite.max_uses})
+                      {invite.expires_at && <span style={{ marginLeft: 8, color: '#64748b' }}>Expires: {invite.expires_at.slice(0, 16).replace('T', ' ')}</span>}
+                      <button className="org-btn org-btn-danger" style={{ marginLeft: 8 }} onClick={() => handleRevokeInvite(invite.id)}>Revoke</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <button className="org-btn" onClick={() => setShowNewInvite(v => !v)}>{showNewInvite ? "Cancel" : "New Invite"}</button>
+              {showNewInvite && (
+                <form onSubmit={handleCreateInvite} style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <label>
+                    Target username (leave blank for open invite):
+                    <input type="text" value={inviteTargetUser} onChange={e => setInviteTargetUser(e.target.value)} placeholder="Target username (optional)" />
+                  </label>
+                  <label>
+                    Max Uses:
+                    <input type="number" min={1} value={inviteMaxUses} onChange={e => setInviteMaxUses(Number(e.target.value))} />
+                  </label>
+                  <label>
+                    Expiration (optional):
+                    <input type="datetime-local" value={inviteExpiresAt} onChange={e => setInviteExpiresAt(e.target.value)} />
+                  </label>
+                  <button className="org-btn" type="submit">Create Invite</button>
+                  {inviteCreateMsg && <div className="form-status-message">{inviteCreateMsg}</div>}
+                  {createdInvite && <div style={{ fontFamily: 'monospace', marginTop: 4 }}>Invite code: {createdInvite.code}</div>}
+                </form>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RoleCheckboxes({ roles, onChange, disabled }: { roles: string[]; onChange: (roles: string[]) => void; disabled?: boolean }) {
+  const [customRole, setCustomRole] = useState("");
+  const ALL_DEFAULT_ROLES = ["member", "admin"];
+  // All roles to show as checkboxes (default + any custom roles already assigned)
+  const allRoles = Array.from(new Set([...ALL_DEFAULT_ROLES, ...roles]));
+
+  const handleAddCustomRole = () => {
+    const role = customRole.trim();
+    if (role && !roles.includes(role)) {
+      onChange([...roles, role]);
+      setCustomRole("");
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {allRoles.map(role => (
+          <label key={role} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <input
+              type="checkbox"
+              checked={roles.includes(role)}
+              onChange={e => {
+                if (e.target.checked) {
+                  onChange([...roles, role]);
+                } else {
+                  onChange(roles.filter(r => r !== role));
+                }
+              }}
+              disabled={disabled}
+            />
+            {role.charAt(0).toUpperCase() + role.slice(1)}
+          </label>
+        ))}
+      </div>
+      {!disabled && (
+        <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
+          <input
+            type="text"
+            value={customRole}
+            onChange={e => setCustomRole(e.target.value)}
+            placeholder="Add custom role"
+            style={{ minWidth: 120 }}
+            onKeyDown={e => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAddCustomRole();
+              }
+            }}
+          />
+          <button
+            type="button"
+            className="org-btn"
+            onClick={handleAddCustomRole}
+            disabled={!customRole.trim() || roles.includes(customRole.trim())}
+          >
+            Add
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function InvitationsTab() {
+  const [invites, setInvites] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
+  const [message, setMessage] = useState("");
+
+  const fetchInvites = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await listUserInvites();
+      setInvites(data);
+    } catch (e: any) {
+      setError(e.message || "Failed to load invitations");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInvites();
+  }, []);
+
+  const handleAccept = async (code: string) => {
+    setMessage("");
+    try {
+      await acceptInvite(code);
+      setMessage("Joined organization!");
+      fetchInvites();
+    } catch (e: any) {
+      setMessage(e.message || "Failed to accept invite");
+    }
+  };
+
+  const handleCodeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteCode.trim()) return;
+    handleAccept(inviteCode.trim());
+    setInviteCode("");
+  };
+
+  return (
+    <div className="tab-content invitations-tab">
+      <h3>Invitations</h3>
+      <form onSubmit={handleCodeSubmit} style={{ marginBottom: 16 }}>
+        <input
+          type="text"
+          value={inviteCode}
+          onChange={e => setInviteCode(e.target.value)}
+          placeholder="Enter invite code"
+          style={{ minWidth: 200 }}
+        />
+        <button className="org-btn" type="submit" disabled={!inviteCode.trim()}>Accept</button>
+      </form>
+      {loading ? (
+        <div>Loading...</div>
+      ) : error ? (
+        <div className="form-status-message error-message">{error}</div>
+      ) : invites.length === 0 ? (
+        <div>No incoming invitations. If you have a code, you may enter it above.</div>
+      ) : (
+        <ul className="invites-list">
+          {invites.map(invite => (
+            <li key={invite.id} style={{ marginBottom: 8 }}>
+              <b>{invite.organization?.name || `Org #${invite.org_id}`}</b> <span style={{ color: '#64748b' }}>({invite.code})</span>
+              <button className="org-btn" style={{ marginLeft: 8 }} onClick={() => handleAccept(invite.code)}>Join</button>
+              {invite.expires_at && <span style={{ marginLeft: 8, color: '#64748b' }} title="Expires">Expires: {invite.expires_at.slice(0, 16).replace('T', ' ')}</span>}
+            </li>
+          ))}
+        </ul>
       )}
       {message && <div className="form-status-message">{message}</div>}
     </div>
@@ -551,6 +828,7 @@ const TAB_COMPONENTS: Record<string, (props: { setTab: (tab: string) => void }) 
   linked: () => <LinkedTab />, 
   orgs: () => <OrgsTab />, 
   users: () => <UsersTab />,
+  invitations: () => <InvitationsTab />,
 };
 
 export const HomePage = observer(() => {

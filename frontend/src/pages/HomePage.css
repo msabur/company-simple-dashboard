@@ -144,8 +144,12 @@
 
 .user-info-name {
   font-weight: 600;
-  font-size: 1.15rem;
+  font-size: 1.3rem;
   margin-bottom: 0.3rem;
+}
+
+.user-info-username {
+  font-size: 1.1rem;
 }
 
 .user-info-email {
@@ -306,7 +310,7 @@
   background: #2563eb;
 }
 
-.google-user-hint {
+.social-user-hint {
   font-size: 0.89em;
   color: #475569;
 }

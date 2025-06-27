@@ -11,7 +11,7 @@ export interface User {
   date_of_birth?: string;
 
   picture_url: string;
-  is_google_user: boolean;
+  auth_provider: "local" | "github" | "google";
   organization?: string;
   roles: string[];
 }
@@ -48,6 +48,7 @@ class AuthStore {
 
   set user(user: User | null) {
     localStorage.setItem("user", JSON.stringify(user));
+    console.log(user)
     this._user = user;
   }
 
