@@ -5,7 +5,7 @@ import models, schemas, auth
 from typing import List
 from sqlalchemy import not_
 import random, string
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 
@@ -199,7 +199,7 @@ def accept_invite(payload: schemas.OrganizationInviteAccept, db: Session = Depen
     invite = db.query(models.OrganizationInvite).filter_by(code=code).first()
     if not invite:
         raise HTTPException(status_code=404, detail="Invite not found")
-    if invite.expires_at and invite.expires_at < datetime.utcnow():
+    if invite.expires_at and invite.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Invite expired")
     if invite.target_user_id and invite.target_user_id != user_id:
         raise HTTPException(status_code=403, detail="This invite is not for you")

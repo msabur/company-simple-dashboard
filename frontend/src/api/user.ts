@@ -42,6 +42,8 @@ export async function githubAuth({ code }: { code: string }) {
 }
 
 export async function checkEmail(email: string): Promise<{ exists: boolean; isSocialUser: boolean }> {
+    console.log('base url is:',BASE_URL)
+
     const res = await fetch(`${BASE_URL}/check-email?email=${encodeURIComponent(email)}`);
     if (!res.ok) throw new Error("Failed to check email");
     return res.json();
