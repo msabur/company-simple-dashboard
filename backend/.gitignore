@@ -1,0 +1,6 @@
+# ignore python cache files and dotenv files
+__pycache__/
+*.py[cod]
+*.env
+db_data
+.pytest_cache
