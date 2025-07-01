@@ -315,6 +315,80 @@
   color: #475569;
 }
 
+.social-user-hint-margin {
+  margin-bottom: 0.5rem;
+}
+
+.invitations-code-form {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.invitations-code-input {
+  min-width: 200px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 1rem;
+  background: #f9fafb;
+  transition: border 0.15s;
+}
+
+.invites-list-item {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.invites-code {
+  color: #64748b;
+}
+
+.invites-join-btn {
+  margin-left: 8px;
+}
+
+.invites-expiry {
+  margin-left: 8px;
+  color: #64748b;
+}
+
+.users-created-invite {
+  font-family: monospace;
+  margin-top: 4px;
+}
+
+.role-checkboxes-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.role-checkboxes-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.role-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.role-checkboxes-add-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.role-checkboxes-add-input {
+  min-width: 120px;
+}
+
 @media (max-width: 700px) {
   .profile-form {
     grid-template-columns: 1fr;
@@ -423,7 +497,18 @@
 }
 .users-actions-row {
   display: flex;
-  gap: 0.5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-left: 8px;
+  gap: 4px;
+}
+.users-kick-btn {
+  margin-top: 4px;
+}
+.users-admin-self-edit-note {
+  color: #64748b;
+  font-size: .95em;
+  margin-left: 8px;
 }
 .org-btn-danger {
   background: #ef4444 !important;
@@ -478,4 +563,10 @@
   display: inline-flex;
   gap: 0.5rem;
   margin-left: 0.5em;
+}
+.users-org-invites-panel {
+  margin-top: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
 }

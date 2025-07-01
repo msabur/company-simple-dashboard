@@ -176,7 +176,7 @@ function ProfileTab() {
           <label htmlFor="profile-email">Email Address</label>
           <input id="profile-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" disabled={isSocialAccount} />
           {isSocialAccount && (
-            <div className="social-user-hint" style={{marginBottom: '0.5rem'}}>You sign in with a social account, so your email address cannot be changed here.</div>
+            <div className="social-user-hint social-user-hint-margin">You sign in with a social account, so your email address cannot be changed here.</div>
           )}
 
           <label htmlFor="profile-language">Language</label>
@@ -604,26 +604,26 @@ function UsersTab() {
                 <tr key={m.user_id}>
                   <td>
                     <div><b>{m.user?.full_name || m.user_id}</b>{isMe && <span className="users-me-label">, me</span>}</div>
-                    <div style={{ color: "#64748b", fontSize: ".97em" }}>{m.user?.username}</div>
+                    <div className="users-username">{m.user?.username}</div>
                   </td>
                   <td>{m.user?.email}</td>
                   <td>
-                    <span style={{ color: "#64748b", fontSize: ".97em" }}>
+                    <span className="users-role-label">
                       {roles.join(", ")}
                     </span>
                     {isAdmin && !isMe && (
-                      <span className="users-actions-row" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", marginLeft: 8, gap: 4 }}>
+                      <span className="users-actions-row">
                         <RoleCheckboxes
                           roles={roles}
                           onChange={roles => handleRolesChange(m.user_id, roles)}
                         />
                         {!roles.includes("admin") && (
-                          <button className="org-btn org-btn-danger" onClick={() => handleKick(m.user_id)} type="button" style={{ marginTop: 4 }}>Kick</button>
+                          <button className="org-btn org-btn-danger users-kick-btn" onClick={() => handleKick(m.user_id)} type="button">Kick</button>
                         )}
                       </span>
                     )}
                     {isMe && isAdmin && (
-                      <span style={{ color: '#64748b', fontSize: '.95em', marginLeft: 8 }} title="You cannot remove your own admin role here for safety."> (admin cannot self-edit)</span>
+                      <span className="users-admin-self-edit-note" title="You cannot remove your own admin role here for safety."> (admin cannot self-edit)</span>
                     )}
                   </td>
                 </tr>
@@ -639,7 +639,7 @@ function UsersTab() {
             {showInvites ? "Hide Invites" : "Manage Invites"}
           </button>
           {showInvites && (
-            <div className="org-invites-panel" style={{ marginTop: 12, border: '1px solid #e5e7eb', borderRadius: 8, padding: 12 }}>
+            <div className="users-org-invites-panel">
               <h4>Organization Invites</h4>
               {inviteLoading ? <div>Loading...</div> : inviteError ? <div className="form-status-message error-message">{inviteError}</div> : (
                 <ul style={{ marginBottom: 12 }}>
@@ -654,7 +654,7 @@ function UsersTab() {
               )}
               <button className="org-btn" onClick={() => setShowNewInvite(v => !v)}>{showNewInvite ? "Cancel" : "New Invite"}</button>
               {showNewInvite && (
-                <form onSubmit={handleCreateInvite} style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <form onSubmit={handleCreateInvite} className="users-new-invite-form">
                   <label>
                     Target username (leave blank for open invite):
                     <input type="text" value={inviteTargetUser} onChange={e => setInviteTargetUser(e.target.value)} placeholder="Target username (optional)" />
@@ -669,7 +669,7 @@ function UsersTab() {
                   </label>
                   <button className="org-btn" type="submit">Create Invite</button>
                   {inviteCreateMsg && <div className="form-status-message">{inviteCreateMsg}</div>}
-                  {createdInvite && <div style={{ fontFamily: 'monospace', marginTop: 4 }}>Invite code: {createdInvite.code}</div>}
+                  {createdInvite && <div className="users-created-invite">Invite code: {createdInvite.code}</div>}
                 </form>
               )}
             </div>
@@ -695,10 +695,10 @@ function RoleCheckboxes({ roles, onChange, disabled }: { roles: string[]; onChan
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+    <div className="role-checkboxes-wrapper">
+      <div className="role-checkboxes-list">
         {allRoles.map(role => (
-          <label key={role} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <label key={role} className="role-checkbox-label">
             <input
               type="checkbox"
               checked={roles.includes(role)}
@@ -716,13 +716,13 @@ function RoleCheckboxes({ roles, onChange, disabled }: { roles: string[]; onChan
         ))}
       </div>
       {!disabled && (
-        <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
+        <div className="role-checkboxes-add-row">
           <input
             type="text"
             value={customRole}
             onChange={e => setCustomRole(e.target.value)}
             placeholder="Add custom role"
-            style={{ minWidth: 120 }}
+            className="role-checkboxes-add-input"
             onKeyDown={e => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -732,7 +732,6 @@ function RoleCheckboxes({ roles, onChange, disabled }: { roles: string[]; onChan
           />
           <button
             type="button"
-            className="org-btn"
             onClick={handleAddCustomRole}
             disabled={!customRole.trim() || roles.includes(customRole.trim())}
           >
@@ -789,13 +788,13 @@ export function InvitationsTab() {
   return (
     <div className="tab-content invitations-tab">
       <h3>Invitations</h3>
-      <form onSubmit={handleCodeSubmit} style={{ marginBottom: 16 }}>
+      <form onSubmit={handleCodeSubmit} className="invitations-code-form">
         <input
           type="text"
           value={inviteCode}
           onChange={e => setInviteCode(e.target.value)}
           placeholder="Enter invite code"
-          style={{ minWidth: 200 }}
+          className="invitations-code-input"
         />
         <button className="org-btn" type="submit" disabled={!inviteCode.trim()}>Accept</button>
       </form>
@@ -808,10 +807,10 @@ export function InvitationsTab() {
       ) : (
         <ul className="invites-list">
           {invites.map(invite => (
-            <li key={invite.id} style={{ marginBottom: 8 }}>
-              <b>{invite.organization?.name || `Org #${invite.org_id}`}</b> <span style={{ color: '#64748b' }}>({invite.code})</span>
-              <button className="org-btn" style={{ marginLeft: 8 }} onClick={() => handleAccept(invite.code)}>Join</button>
-              {invite.expires_at && <span style={{ marginLeft: 8, color: '#64748b' }} title="Expires">Expires: {invite.expires_at.slice(0, 16).replace('T', ' ')}</span>}
+            <li key={invite.id} className="invites-list-item">
+              <b>{invite.organization?.name || `Org #${invite.org_id}`}</b> <span className="invites-code">({invite.code})</span>
+              <button className="org-btn invites-join-btn" onClick={() => handleAccept(invite.code)}>Join</button>
+              {invite.expires_at && <span className="invites-expiry" title="Expires">Expires: {invite.expires_at.slice(0, 16).replace('T', ' ')}</span>}
             </li>
           ))}
         </ul>

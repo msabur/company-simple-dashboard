@@ -94,10 +94,7 @@ export default function AuthPage() {
         {step === "email" && (
           <form className="auth-form" onSubmit={handleContinue}>
             <div style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                useOneTap
-              />
+              <GoogleLogin onSuccess={handleGoogleSuccess} useOneTap />
               {/* GitHub Login Button */}
               <button
                 type="button"
