@@ -104,3 +104,29 @@ export async function updateInfo({ full_name, email, phone_number, gender, timez
     }
     return data;
 }
+
+export async function verifyEmail({ email, code }: { email: string; code: string }) {
+    const res = await fetch(`${BASE_URL}/verify-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.detail || "Verification failed");
+    }
+    return data;
+}
+
+export async function resendVerificationCode({ email }: { email: string }) {
+    const res = await fetch(`${BASE_URL}/resend-verification-code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.detail || "Resend failed");
+    }
+    return data;
+}

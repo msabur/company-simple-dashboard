@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
-from database import get_db
-import models, schemas, auth
 from typing import List
 from sqlalchemy import not_
 import random, string
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+
+from helpers import auth
+from database import get_db
+import models, schemas
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 
@@ -155,7 +157,7 @@ def list_org_invites(org_id: int, db: Session = Depends(get_db), admin=Depends(r
     return [schemas.OrganizationInviteOut.model_validate(i) for i in invites]
 
 @router.post("/{org_id}/invites", response_model=schemas.OrganizationInviteOut)
-def create_invite(org_id: int, payload: schemas.OrganizationInviteCreate, db: Session = Depends(get_db), admin=Depends(require_org_admin)):
+def create_invite(org_id: int, payload: schemas.OrganizationInviteCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), admin=Depends(require_org_admin)):
     # Generate unique code
     for _ in range(5):
         code = generate_invite_code(org_id)
@@ -182,6 +184,22 @@ def create_invite(org_id: int, payload: schemas.OrganizationInviteCreate, db: Se
     db.add(invite)
     db.commit()
     db.refresh(invite)
+
+    # Send invite email if targeted
+    if target_user_id:
+        user = db.query(models.User).filter_by(id=target_user_id).first()
+        org = db.query(models.Organization).filter_by(id=org_id).first()
+        if user and org and background_tasks:
+            from helpers.emails import send_org_invite_email
+            email_info = schemas.EmailDetails(
+                recipients=[user.email],
+                body={
+                    "user_name": user.username,
+                    "org_name": org.name,
+                    "invite_code": code,
+                }
+            )
+            background_tasks.add_task(send_org_invite_email, email_info)
     return schemas.OrganizationInviteOut.model_validate(invite)
 
 @router.delete("/{org_id}/invites/{invite_id}")

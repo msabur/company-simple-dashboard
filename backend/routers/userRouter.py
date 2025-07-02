@@ -1,25 +1,34 @@
-from fastapi import APIRouter, Depends, HTTPException
+import random
+import string
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 import requests
 from sqlalchemy.orm import Session
-from config import GITHUB_CLIENT_SECRET, VITE_GITHUB_CLIENT_ID
-from database import get_db
-import models, schemas, auth, emails
 from pydantic import EmailStr
+
+from config import GITHUB_CLIENT_SECRET, VITE_GITHUB_CLIENT_ID
+from helpers import emails, auth
+import models, schemas
+from database import get_db
 
 router = APIRouter(tags=["users"])
 
 @router.get("/check-email")
-def checkEmail(email: EmailStr, db: Session = Depends(get_db)):
+def checkEmail(email: EmailStr, db: Session = Depends(get_db)) -> schemas.EmailCheckResult:
     db_user = db.query(models.User).filter_by(email=email).first()
-    if db_user is None:
-        return {'exists': False, 'isSocialUser': False}
-    else:
-        return {'exists': True, 'isSocialUser': db_user.auth_provider != "local"}
+
+    exists = db_user is not None
+    isSocialUser = exists and db_user.auth_provider != "local"
+    verified = exists and db_user.verified
+    return schemas.EmailCheckResult(exists=exists, isSocialUser=isSocialUser, verified=verified)
+
+def generate_verification_code(length: int = 4) -> str:
+    code = ''.join(random.choices(string.digits, k=length))
+    return code
 
 @router.post("/signup")
-async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(models.User).filter_by(email=user.email).first()
-    if existing_user:
+async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    existing_email = db.query(models.User).filter_by(email=user.email).first()
+    if existing_email:
         raise HTTPException(status_code=400, detail="Email already registered")
     existing_username = db.query(models.User).filter_by(username=user.username).first()
     if existing_username:
@@ -31,28 +40,37 @@ async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
         password_hash=auth.hash_password(user.password),
     )
     db.add(db_user)
+
+    existing_code_entry = db.query(models.VerificationCode).filter_by(email=user.email).first()
+    if existing_code_entry:
+        code = existing_code_entry.code
+    else:
+        code = generate_verification_code()
+        db_verification_code = models.VerificationCode(email=user.email, code=code)
+        db.add(db_verification_code)
+    
     db.commit()
     db.refresh(db_user)
-    token = auth.create_token({"user_id": db_user.id})
-
-    # TODO actual implementation. already made a model
-    # https://sabuhish.github.io/fastapi-mail/example/#using-jinja2-html-templates
-    signup_email = schemas.EmailSchema(
+    
+    email_info = schemas.EmailDetails(
         recipients=[user.email],
         body={
             "user_name": user.username,
-            "verification_code": 4587,
+            "verification_code": code,
         }
     )
-    await emails.send_signup_verification_email(signup_email)
+    background_tasks.add_task(emails.send_signup_verification_email, email_info)
 
-    return {"token": token, "user": schemas.UserOut.model_validate(db_user)}
+    return {"user": schemas.UserOut.model_validate(db_user)}
 
 @router.post("/login")
 def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter_by(email=user.email).first()
     if not db_user or not db_user.password_hash or not auth.verify_password(user.password, db_user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    elif not db_user.verified:
+        raise HTTPException(status_code=401, detail="Email not verified")
+    
     token = auth.create_token({"user_id": db_user.id})
     return {"token": token, "user": schemas.UserOut.model_validate(db_user)}
 
@@ -174,3 +192,43 @@ def update_info(payload: schemas.UpdateInfoRequest, db: Session = Depends(get_db
     db.commit()
     db.refresh(db_user)
     return {"detail": "User info updated successfully", "user": schemas.UserOut.model_validate(db_user)}
+
+@router.post("/resend-verification-code")
+def resend_verification_code(payload: schemas.EmailCheck, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter_by(email=payload.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.verified:
+        raise HTTPException(status_code=400, detail="User already verified")
+    code_entry = db.query(models.VerificationCode).filter_by(email=payload.email).first()
+    if code_entry:
+        code = code_entry.code
+    else:
+        code = generate_verification_code()
+        db_verification_code = models.VerificationCode(email=payload.email, code=code)
+        db.add(db_verification_code)
+        db.commit()
+    email_info = schemas.EmailDetails(
+        recipients=[payload.email],
+        body={
+            "user_name": user.username,
+            "verification_code": code,
+        }
+    )
+    background_tasks.add_task(emails.send_signup_verification_email, email_info)
+    return {"detail": "Verification code sent"}
+
+@router.post("/verify-email")
+def verify_email(payload: schemas.EmailVerificationRequest, db: Session = Depends(get_db)):
+    email = payload.email
+    code = payload.code
+    code_entry = db.query(models.VerificationCode).filter_by(email=email, code=code).first()
+    if not code_entry:
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+    user = db.query(models.User).filter_by(email=email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.verified = True
+    db.delete(code_entry)
+    db.commit()
+    return {"detail": "Email verified successfully"}

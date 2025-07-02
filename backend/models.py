@@ -10,8 +10,10 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     email: Mapped[str] = mapped_column(unique=True, index=True)
-    full_name: Mapped[str] = mapped_column()
     username: Mapped[str] = mapped_column(unique=True)
+
+    verified: Mapped[bool] = mapped_column(default=False)
+    full_name: Mapped[str] = mapped_column()
     password_hash: Mapped[str | None] = mapped_column()
     picture_url: Mapped[str] = mapped_column(default="")
     phone_number: Mapped[str | None] = mapped_column()
@@ -33,15 +35,11 @@ class VerificationCode(Base):
     __tablename__ = "verification_codes"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
+    email: Mapped[str] = mapped_column(ForeignKey("users.email"), unique=True)
     code: Mapped[int] = mapped_column()
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
-    )
-    expires_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=text("NOW() + interval '1 hour'")
     )
 
     user = relationship("User")

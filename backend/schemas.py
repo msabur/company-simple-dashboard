@@ -1,8 +1,9 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, ConfigDict, field_validator, field_serializer
 from typing import List, Optional, Dict, Any
+from fastapi import BackgroundTasks
 
-class EmailSchema(BaseModel):
+class EmailDetails(BaseModel):
     recipients: List[EmailStr]
     body: Dict[str, Any]
 
@@ -32,6 +33,10 @@ class UserOut(BaseModel):
     def serialize_date_of_birth(self, v: datetime | None) -> str | None:
         return v.strftime(r"%Y-%m-%d") if v else None
 
+class EmailCheckResult(BaseModel):
+    exists: bool
+    isSocialUser: bool
+    verified: bool
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -122,4 +127,8 @@ class OrganizationInviteOut(OrganizationInviteBase):
     model_config = ConfigDict(from_attributes=True)
 
 class OrganizationInviteAccept(BaseModel):
+    code: str
+
+class EmailVerificationRequest(BaseModel):
+    email: EmailStr
     code: str

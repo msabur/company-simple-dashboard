@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { GoogleLogin } from "@react-oauth/google";
-import { signup, login, googleAuth, checkEmail } from "../api/user";
+import { signup, login, googleAuth, checkEmail, verifyEmail, resendVerificationCode } from "../api/user";
 import { authStore } from "../store/authStore";
 import "./AuthPage.css"
 
 export default function AuthPage() {
-  const [step, setStep] = useState<"email" | "login" | "signup">("email");
+  const [step, setStep] = useState<"email" | "login" | "signup" | "verification">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -16,6 +16,9 @@ export default function AuthPage() {
   const [isSocialUser, setIsSocialUser] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
   const [, navigate] = useLocation();
 
   const heading =
@@ -54,7 +57,11 @@ export default function AuthPage() {
       authStore.user = res.user;
       navigate("/");
     } catch (err: any) {
-      setError(err.message || "Login failed");
+      if (err.message === "Email not verified") {
+        setStep("verification");
+      } else {
+        setError(err.message || "Login failed");
+      }
     }
   };
 
@@ -62,12 +69,40 @@ export default function AuthPage() {
     e.preventDefault();
     setError(null);
     try {
-      const res = await signup({ email, full_name: fullName, username, password });
+      await signup({ email, full_name: fullName, username, password });
+      setStep("verification");
+    } catch (err: any) {
+      setError(err.message || "Signup failed");
+    }
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setVerifying(true);
+    try {
+      await verifyEmail({ email, code: verificationCode });
+      // Optionally, auto-login after verification
+      const res = await login({ email, password });
       authStore.token = res.token;
       authStore.user = res.user;
       navigate("/");
     } catch (err: any) {
-      setError(err.message || "Signup failed");
+      setError(err.message || "Verification failed");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError(null);
+    setResending(true);
+    try {
+      await resendVerificationCode({ email });
+    } catch (err: any) {
+      setError(err.message || "Resend failed");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -195,6 +230,31 @@ export default function AuthPage() {
             </div>
             <div className="auth-actions">
               <button type="submit">Sign up</button>
+              <a className="go-back-link" onClick={e => { e.preventDefault(); setStep("email"); }} href="#">Go back</a>
+            </div>
+          </form>
+        )}
+        {step === "verification" && (
+          <form className="auth-form" onSubmit={handleVerify}>
+            <div className="auth-hint">To complete sign-up, please enter the 4-digit code we sent to <b>{email}</b>.</div>
+            <label htmlFor="verificationCode">Verification Code</label>
+            <input
+              type="text"
+              id="verificationCode"
+              name="verificationCode"
+              value={verificationCode}
+              onChange={e => setVerificationCode(e.target.value)}
+              required
+              maxLength={4}
+              pattern="[0-9]{4}"
+              autoFocus
+              placeholder="4-digit code"
+            />
+            <div className="auth-actions">
+              <button type="submit" disabled={verifying}>{verifying ? "Verifying..." : "Submit"}</button>
+              <button type="button" onClick={handleResend} disabled={resending} style={{ marginLeft: 8 }}>
+                {resending ? "Resending..." : "Resend"}
+              </button>
               <a className="go-back-link" onClick={e => { e.preventDefault(); setStep("email"); }} href="#">Go back</a>
             </div>
           </form>
