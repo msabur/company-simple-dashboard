@@ -1,6 +1,10 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, ConfigDict, field_validator, field_serializer
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
+
+class EmailSchema(BaseModel):
+    recipients: List[EmailStr]
+    body: Dict[str, Any]
 
 class UserCreate(BaseModel):
     email: EmailStr

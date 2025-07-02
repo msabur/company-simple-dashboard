@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { authStore } from "../store/authStore";
 import { githubAuth } from "../api/user";
@@ -7,15 +7,21 @@ export default function GithubCallbackPage() {
   const [, navigate] = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasRun = useRef(false);
 
   useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     const url = new URL(window.location.href);
     const code = url.searchParams.get("code");
+
     if (!code) {
       setError("No code found in URL");
       setLoading(false);
       return;
     }
+
     githubAuth({ code })
       .then(res => {
         authStore.token = res.token;

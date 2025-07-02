@@ -6,8 +6,11 @@ export async function signup({ email, full_name, username, password }: { email: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, full_name, username, password })
     });
-    if (!res.ok) throw new Error("Signup failed");
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.detail || "Signup failed");
+    }
+    return data;
 }
 
 export async function login({ email, password }: { email: string; password: string }) {
@@ -16,8 +19,11 @@ export async function login({ email, password }: { email: string; password: stri
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
     });
-    if (!res.ok) throw new Error("Login failed");
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.detail || "Login failed");
+    }
+    return data;
 }
 
 export async function googleAuth({ token }: { token: string }) {
@@ -26,8 +32,11 @@ export async function googleAuth({ token }: { token: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token })
     });
-    if (!res.ok) throw new Error("Google auth failed");
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.detail || "Google auth failed");
+    }
+    return data;
 }
 
 // GitHub OAuth: exchange code for token
@@ -37,16 +46,21 @@ export async function githubAuth({ code }: { code: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code })
     });
-    if (!res.ok) throw new Error("GitHub auth failed");
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.detail || "GitHub auth failed");
+    }
+    return data;
 }
 
 export async function checkEmail(email: string): Promise<{ exists: boolean; isSocialUser: boolean }> {
     console.log('base url is:',BASE_URL)
-
     const res = await fetch(`${BASE_URL}/check-email?email=${encodeURIComponent(email)}`);
-    if (!res.ok) throw new Error("Failed to check email");
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.detail || "Failed to check email");
+    }
+    return data;
 }
 
 export async function changePassword({ old_password, new_password }: { old_password: string; new_password: string }) {
@@ -59,12 +73,11 @@ export async function changePassword({ old_password, new_password }: { old_passw
         },
         body: JSON.stringify({ old_password, new_password })
     });
+    const data = await res.json();
     if (!res.ok) {
-        const errorData = await res.json();
-        console.error(errorData);
-        throw new Error(`Failed to change password: status ${res.status}`);
+        throw new Error(data.detail || `Failed to change password: status ${res.status}`);
     }
-    return res.json();
+    return data;
 }
 
 export async function updateInfo({ full_name, email, phone_number, gender, timezone, date_of_birth, language }: {
@@ -85,10 +98,9 @@ export async function updateInfo({ full_name, email, phone_number, gender, timez
         },
         body: JSON.stringify({ full_name, email, phone_number, gender, timezone, date_of_birth, language })
     });
+    const data = await res.json();
     if (!res.ok) {
-        const errorData = await res.json();
-        console.error(errorData);
-        throw new Error(`Failed to update info: status ${res.status}`);
+        throw new Error(data.detail || `Failed to update info: status ${res.status}`);
     }
-    return res.json();
+    return data;
 }

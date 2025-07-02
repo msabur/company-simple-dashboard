@@ -1,7 +1,7 @@
 from datetime import datetime
 from database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import CheckConstraint, text, DateTime, ForeignKey, String, Integer, UniqueConstraint
+from sqlalchemy import text, DateTime, ForeignKey, String, Integer, UniqueConstraint
 from sqlalchemy.sql import func
 import sqlalchemy.dialects.postgresql
 
@@ -28,6 +28,23 @@ class User(Base):
     created_organizations = relationship("Organization", back_populates="created_by")
     organizations = relationship("OrganizationMember", back_populates="user", cascade="all, delete-orphan")
     invites = relationship("OrganizationInvite", back_populates="target_user", cascade="all, delete-orphan")
+
+class VerificationCode(Base):
+    __tablename__ = "verification_codes"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
+    code: Mapped[int] = mapped_column()
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=text("NOW() + interval '1 hour'")
+    )
+
+    user = relationship("User")
 
 class Organization(Base):
     __tablename__ = "organizations"

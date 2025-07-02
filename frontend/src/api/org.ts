@@ -6,11 +6,11 @@ export async function getMyOrganizations() {
   const res = await fetch(`${BASE_URL}/organizations/me`, {
     headers: { Authorization: `Bearer ${authStore.token}` },
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to fetch organizations");
+    throw new Error(data.detail || "Failed to fetch organizations");
   }
-  return res.json();
+  return data;
 }
 
 export async function createOrganization({ name }: { name: string }) {
@@ -22,11 +22,11 @@ export async function createOrganization({ name }: { name: string }) {
     },
     body: JSON.stringify({ name }),
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to create organization");
+    throw new Error(data.detail || "Failed to create organization");
   }
-  return res.json();
+  return data;
 }
 
 export async function joinOrganization(orgId: number) {
@@ -34,22 +34,22 @@ export async function joinOrganization(orgId: number) {
     method: "POST",
     headers: { Authorization: `Bearer ${authStore.token}` },
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to join organization");
+    throw new Error(data.detail || "Failed to join organization");
   }
-  return res.json();
+  return data;
 }
 
 export async function getOrganizationMembers(orgId: number) {
   const res = await fetch(`${BASE_URL}/organizations/${orgId}/members`, {
     headers: { Authorization: `Bearer ${authStore.token}` },
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to fetch members");
+    throw new Error(data.detail || "Failed to fetch members");
   }
-  return res.json();
+  return data;
 }
 
 export async function updateMemberRole(orgId: number, userId: number, role: string) {
@@ -61,11 +61,11 @@ export async function updateMemberRole(orgId: number, userId: number, role: stri
     },
     body: JSON.stringify({ role }),
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to update role");
+    throw new Error(data.detail || "Failed to update role");
   }
-  return res.json();
+  return data;
 }
 
 export async function updateMemberRoles(orgId: number, userId: number, roles: string[]) {
@@ -77,11 +77,11 @@ export async function updateMemberRoles(orgId: number, userId: number, roles: st
     },
     body: JSON.stringify({ roles }),
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to update roles");
+    throw new Error(data.detail || "Failed to update roles");
   }
-  return res.json();
+  return data;
 }
 
 export async function removeMember(orgId: number, userId: number) {
@@ -89,22 +89,22 @@ export async function removeMember(orgId: number, userId: number) {
     method: "DELETE",
     headers: { Authorization: `Bearer ${authStore.token}` },
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to remove member");
+    throw new Error(data.detail || "Failed to remove member");
   }
-  return res.json();
+  return data;
 }
 
 export async function getJoinableOrganizations() {
   const res = await fetch(`${BASE_URL}/organizations/?include_mine=false`, {
     headers: { Authorization: `Bearer ${authStore.token}` }
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to fetch joinable organizations");
+    throw new Error(data.detail || "Failed to fetch joinable organizations");
   }
-  return res.json();
+  return data;
 }
 
 export async function leaveOrganization(orgId: number) {
@@ -112,38 +112,38 @@ export async function leaveOrganization(orgId: number) {
     method: "POST",
     headers: { Authorization: `Bearer ${authStore.token}` },
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to leave organization");
+    throw new Error(data.detail || "Failed to leave organization");
   }
-  return res.json();
+  return data;
 }
 
 export async function listOrgInvites(orgId: number) {
   const res = await fetch(`${BASE_URL}/organizations/${orgId}/invites`, {
     headers: { Authorization: `Bearer ${authStore.token}` },
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to fetch invites");
+    throw new Error(data.detail || "Failed to fetch invites");
   }
-  return res.json();
+  return data;
 }
 
-export async function createOrgInvite(orgId: number, data: { target_username?: string; max_uses?: number; expires_at?: string | null }) {
+export async function createOrgInvite(orgId: number, dataInput: { target_username?: string; max_uses?: number; expires_at?: string | null }) {
   const res = await fetch(`${BASE_URL}/organizations/${orgId}/invites`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${authStore.token}`,
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(dataInput),
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to create invite");
+    throw new Error(data.detail || "Failed to create invite");
   }
-  return res.json();
+  return data;
 }
 
 export async function revokeOrgInvite(orgId: number, inviteId: number) {
@@ -151,22 +151,22 @@ export async function revokeOrgInvite(orgId: number, inviteId: number) {
     method: "DELETE",
     headers: { Authorization: `Bearer ${authStore.token}` },
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to revoke invite");
+    throw new Error(data.detail || "Failed to revoke invite");
   }
-  return res.json();
+  return data;
 }
 
 export async function listUserInvites() {
   const res = await fetch(`${BASE_URL}/organizations/me/invites`, {
     headers: { Authorization: `Bearer ${authStore.token}` },
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to fetch user invites");
+    throw new Error(data.detail || "Failed to fetch user invites");
   }
-  return res.json();
+  return data;
 }
 
 export async function acceptInvite(code: string) {
@@ -178,9 +178,9 @@ export async function acceptInvite(code: string) {
     },
     body: JSON.stringify({ code }),
   });
+  const data = await res.json();
   if (!res.ok) {
-    console.log(await res.json());
-    throw new Error("Failed to accept invite");
+    throw new Error(data.detail || "Failed to accept invite");
   }
-  return res.json();
+  return data;
 }
