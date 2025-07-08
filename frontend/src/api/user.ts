@@ -130,3 +130,27 @@ export async function resendVerificationCode({ email }: { email: string }) {
     }
     return data;
 }
+
+export async function sendPasswordResetEmail(email: string) {
+    const res = await fetch(`${BASE_URL}/send-password-reset-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.detail || "Failed to send reset email");
+    }
+    return data;
+}
+
+export async function resetPassword(code: string, new_password: string) {
+    const res = await fetch(`${BASE_URL}/reset-password?code=${encodeURIComponent(code)}&new_password=${encodeURIComponent(new_password)}`, {
+        method: "POST"
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.detail || "Failed to reset password");
+    }
+    return data;
+}

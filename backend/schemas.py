@@ -45,7 +45,7 @@ class UserLogin(BaseModel):
 class GoogleAuthRequest(BaseModel):
     token: str
 
-class EmailCheck(BaseModel):
+class EmailContainer(BaseModel):
     email: EmailStr
 
 class ChangePasswordRequest(BaseModel):

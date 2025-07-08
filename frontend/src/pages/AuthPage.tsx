@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { GoogleLogin } from "@react-oauth/google";
-import { signup, login, googleAuth, checkEmail, verifyEmail, resendVerificationCode } from "../api/user";
+import { signup, login, googleAuth, checkEmail, verifyEmail, resendVerificationCode, sendPasswordResetEmail } from "../api/user";
 import { authStore } from "../store/authStore";
 import "./AuthPage.css"
 
 export default function AuthPage() {
-  const [step, setStep] = useState<"email" | "login" | "signup" | "verification">("email");
+  const [step, setStep] = useState<
+    | "email"
+    | "login"
+    | "signup"
+    | "verification"
+    | "reset-request"
+  >("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -19,6 +25,8 @@ export default function AuthPage() {
   const [verificationCode, setVerificationCode] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetStatus, setResetStatus] = useState("");
   const [, navigate] = useLocation();
 
   const heading =
@@ -120,6 +128,17 @@ export default function AuthPage() {
     }
   };
 
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetStatus("");
+    try {
+      await sendPasswordResetEmail(resetEmail);
+      setResetStatus("An email has been sent with a link to reset your password. Please check your spam folder.");
+    } catch (err: any) {
+      setResetStatus(err.message || "Email not found, try again");
+    }
+  };
+
   return (
     <div className="auth-form-container-outer">
       <img src="/logo.png" alt="logo" className="logo" />
@@ -191,7 +210,26 @@ export default function AuthPage() {
             <div className="auth-actions">
               <button type="submit">Log in</button>
               <a className="go-back-link" onClick={e => { e.preventDefault(); setStep("email"); }} href="#">Go back</a>
+              <button type="button" className="forgot-password-link" style={{marginLeft:8}} onClick={() => { setStep("reset-request"); setResetEmail(email); setResetStatus(""); }}>Forgot password?</button>
             </div>
+          </form>
+        )}
+        {step === "reset-request" && (
+          <form className="auth-form" onSubmit={handleReset} style={{marginTop:16}}>
+            <label htmlFor="resetEmail">Enter your email</label>
+            <input
+              type="email"
+              id="resetEmail"
+              name="resetEmail"
+              value={resetEmail}
+              onChange={e => setResetEmail(e.target.value)}
+              required
+              placeholder="Email"
+              autoFocus
+            />
+            <button type="submit">Send reset link</button>
+            <button type="button" onClick={() => setStep("login")} style={{marginLeft:8}}>Cancel</button>
+            {resetStatus && <div className="auth-hint">{resetStatus}</div>}
           </form>
         )}
         {step === "signup" && (

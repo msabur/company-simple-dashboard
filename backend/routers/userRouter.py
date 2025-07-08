@@ -1,14 +1,21 @@
 import random
 import string
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+import uuid
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
 import requests
 from sqlalchemy.orm import Session
 from pydantic import EmailStr
 
-from config import GITHUB_CLIENT_SECRET, VITE_GITHUB_CLIENT_ID
+from config import GITHUB_CLIENT_SECRET, VITE_GITHUB_CLIENT_ID, PASSWORD_RESET_BASE_URL
 from helpers import emails, auth
 import models, schemas
 from database import get_db
+
+def generate_verification_code(length: int = 4) -> str:
+    return ''.join(random.choices(string.digits, k=length))
+
+def generate_password_reset_code() -> str:
+    return str(uuid.uuid4())
 
 router = APIRouter(tags=["users"])
 
@@ -21,9 +28,6 @@ def checkEmail(email: EmailStr, db: Session = Depends(get_db)) -> schemas.EmailC
     verified = exists and db_user.verified
     return schemas.EmailCheckResult(exists=exists, isSocialUser=isSocialUser, verified=verified)
 
-def generate_verification_code(length: int = 4) -> str:
-    code = ''.join(random.choices(string.digits, k=length))
-    return code
 
 @router.post("/signup")
 async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
@@ -194,7 +198,7 @@ def update_info(payload: schemas.UpdateInfoRequest, db: Session = Depends(get_db
     return {"detail": "User info updated successfully", "user": schemas.UserOut.model_validate(db_user)}
 
 @router.post("/resend-verification-code")
-def resend_verification_code(payload: schemas.EmailCheck, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+def resend_verification_code(payload: schemas.EmailContainer, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = db.query(models.User).filter_by(email=payload.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -216,7 +220,7 @@ def resend_verification_code(payload: schemas.EmailCheck, background_tasks: Back
         }
     )
     background_tasks.add_task(emails.send_signup_verification_email, email_info)
-    return {"detail": "Verification code sent"}
+    return {"detail": "Sending"}
 
 @router.post("/verify-email")
 def verify_email(payload: schemas.EmailVerificationRequest, db: Session = Depends(get_db)):
@@ -232,3 +236,53 @@ def verify_email(payload: schemas.EmailVerificationRequest, db: Session = Depend
     db.delete(code_entry)
     db.commit()
     return {"detail": "Email verified successfully"}
+
+@router.post('/send-password-reset-email')
+def send_password_reset_email(payload: schemas.EmailContainer, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter_by(email=payload.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Email doesn't exist")
+    
+    existing_reset_entry = db.query(models.PasswordReset).filter_by(email=payload.email).first()
+    if existing_reset_entry:
+        code = existing_reset_entry.code
+    else:
+        code = generate_password_reset_code()
+        db_pw_reset = models.PasswordReset(email=payload.email, code=code)
+        db.add(db_pw_reset)
+        db.commit()
+    
+    email_info = schemas.EmailDetails(
+        recipients=[payload.email],
+        body={
+            "user_name": user.username,
+            "reset_link": f"{PASSWORD_RESET_BASE_URL}?code={code}"
+        }
+    )
+    background_tasks.add_task(emails.send_password_reset_email, email_info)
+    return {"detail": "Sending"}
+
+@router.get('/verify-password-reset-code')
+def verify_password_reset_code(code: str, db: Session = Depends(get_db)):
+    db_pw_reset = db.query(models.PasswordReset).filter_by(code=code).first()
+    if db_pw_reset is None:
+        raise HTTPException(status_code=404, detail="Code not found")
+    return {"detail":"Code found!"}
+
+@router.post('/reset-password')
+def reset_password(code: str, new_password: str, db: Session = Depends(get_db)):
+    db_pw_reset = db.query(models.PasswordReset).filter_by(code=code).first()
+    if db_pw_reset is None:
+        raise HTTPException(status_code=404, detail="Code not found")
+    
+    db_user = db.query(models.User).filter_by(email=db_pw_reset.email).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User account no longer exists")
+    
+    db_user.password_hash = auth.hash_password(new_password)
+
+    db.add(db_user)
+    db.delete(db_pw_reset)
+    db.commit()
+    
+    return {"detail":'Success'}

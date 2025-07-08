@@ -6,6 +6,7 @@ import AuthPage from "./pages/AuthPage";
 import { HomePage } from "./pages/HomePage";
 import { authStore } from "./store/authStore";
 import GithubCallbackPage from "./pages/GithubCallbackPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 import "./index.css";
 
@@ -36,6 +37,9 @@ export default observer(function App() {
             </Route>
             <Route path="/auth/github/callback">
               <GithubCallbackPage />
+            </Route>
+            <Route path="/reset-password">
+              <ResetPasswordPage />
             </Route>
             <Route>
               <HomePage />

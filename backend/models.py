@@ -38,11 +38,16 @@ class VerificationCode(Base):
     email: Mapped[str] = mapped_column(ForeignKey("users.email"), unique=True)
     code: Mapped[int] = mapped_column()
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    user = relationship("User")
+class PasswordReset(Base):
+    __tablename__ = "password_resets"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(ForeignKey('users.email'), unique=True)
+    code: Mapped[str] = mapped_column(unique=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 class Organization(Base):
     __tablename__ = "organizations"
