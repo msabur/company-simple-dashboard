@@ -145,7 +145,6 @@ function ProfileTab() {
       setMessage("Profile updated successfully!");
       authStore.user = res.user;
     } catch (err: any) {
-      console.log(err)
       setMessage(err.message || "Failed to update profile");
     } finally {
       setLoading(false);
@@ -273,7 +272,6 @@ function OrgsTab() {
     setError("");
     try {
       const data = await getMyOrganizations();
-      console.log(orgs)
       setOrgs(data);
     } catch (e: any) {
       setError(e.message || "Failed to load organizations");
@@ -538,7 +536,11 @@ function UsersTab() {
     try {
       const payload: any = { max_uses: inviteMaxUses };
       if (inviteTargetUser) payload.target_username = inviteTargetUser;
-      if (inviteExpiresAt) payload.expires_at = inviteExpiresAt;
+      if (inviteExpiresAt) {
+        // Convert local datetime-local string to ISO string with timezone
+        const local = new Date(inviteExpiresAt);
+        payload.expires_at = local.toISOString();
+      }
       const invite = await createOrgInvite(selectedOrg.id, payload);
       setCreatedInvite(invite);
       setInviteCreateMsg("Invite created!");
@@ -645,7 +647,11 @@ function UsersTab() {
                   {invites.length === 0 ? <li>No invites</li> : invites.map(invite => (
                     <li key={invite.id} style={{ marginBottom: 6 }}>
                       <span style={{ fontFamily: 'monospace' }}>{invite.code}</span> (uses: {invite.uses}/{invite.max_uses})
-                      {invite.expires_at && <span style={{ marginLeft: 8, color: '#64748b' }}>Expires: {invite.expires_at.slice(0, 16).replace('T', ' ')}</span>}
+                      {invite.expires_at && (
+                        <span style={{ marginLeft: 8, color: '#64748b' }}>
+                          Expires: <InviteExpiryCountdown expiresAt={invite.expires_at} />
+                        </span>
+                      )}
                       <button className="org-btn org-btn-danger" style={{ marginLeft: 8 }} onClick={() => handleRevokeInvite(invite.id)}>Revoke</button>
                       <button
                         type="button"
@@ -824,6 +830,35 @@ export function InvitationsTab() {
       {message && <div className="form-status-message">{message}</div>}
     </div>
   );
+}
+
+function InviteExpiryCountdown({ expiresAt }: { expiresAt: string }) {
+  const [timeLeft, setTimeLeft] = useState<string>("");
+
+  useEffect(() => {
+    function updateCountdown() {
+      const expiry = new Date(expiresAt);
+      const now = new Date();
+      const diff = expiry.getTime() - now.getTime();
+      if (diff <= 0) {
+        setTimeLeft("Expired");
+        return;
+      }
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      setTimeLeft(
+        (hours > 0 ? `${hours}h ` : "") +
+        (minutes > 0 ? `${minutes}m ` : "") +
+        `${seconds}s`
+      );
+    }
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timer);
+  }, [expiresAt]);
+
+  return <span>{timeLeft}</span>;
 }
 
 const TAB_COMPONENTS: Record<string, (props: { setTab: (tab: string) => void }) => JSX.Element> = {

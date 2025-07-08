@@ -161,11 +161,10 @@ def create_invite(org_id: int, payload: schemas.OrganizationInviteCreate, backgr
     # Generate unique code
     for _ in range(5):
         code = generate_invite_code(org_id)
-        if not db.query(models.OrganizationInvite).filter_by(code=code).first():
+        if not db.query(models.OrganizationInvite).filter_by(org_id=org_id, code=code).first():
             break
     else:
         raise HTTPException(status_code=500, detail="Failed to generate unique invite code")
-    
     target_user_id = None
     if payload.target_username:
         user = db.query(models.User).filter_by(username=payload.target_username).first()
