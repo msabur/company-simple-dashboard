@@ -27,6 +27,8 @@ export default function AuthPage() {
   const [resending, setResending] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetStatus, setResetStatus] = useState("");
+  const [resetSent, setResetSent] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [, navigate] = useLocation();
 
   const heading =
@@ -134,8 +136,23 @@ export default function AuthPage() {
     try {
       await sendPasswordResetEmail(resetEmail);
       setResetStatus("An email has been sent with a link to reset your password. Please check your spam folder.");
+      setResetSent(true);
     } catch (err: any) {
       setResetStatus(err.message || "Email not found, try again");
+      setResetSent(false);
+    }
+  };
+
+  const handleResendReset = async () => {
+    setResendLoading(true);
+    setResetStatus("");
+    try {
+      await sendPasswordResetEmail(resetEmail);
+      setResetStatus("Reset email resent. Please check your inbox.");
+    } catch (err: any) {
+      setResetStatus("Failed to resend reset email.");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -229,6 +246,16 @@ export default function AuthPage() {
             />
             <button type="submit">Send reset link</button>
             <button type="button" onClick={() => setStep("login")} style={{marginLeft:8}}>Cancel</button>
+            {resetSent && (
+              <button
+                type="button"
+                style={{ fontSize: 12, marginTop: 8, background: "none", border: "none", color: "#64748b", textDecoration: "underline", cursor: "pointer" }}
+                onClick={handleResendReset}
+                disabled={resendLoading}
+              >
+                {resendLoading ? "Resending..." : "Resend reset email"}
+              </button>
+            )}
             {resetStatus && <div className="auth-hint">{resetStatus}</div>}
           </form>
         )}

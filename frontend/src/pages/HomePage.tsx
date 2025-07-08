@@ -543,7 +543,6 @@ function UsersTab() {
       setCreatedInvite(invite);
       setInviteCreateMsg("Invite created!");
       fetchInvites();
-
       setInviteTargetUser("");
       setInviteExpiresAt("");
       setInviteMaxUses(1);
@@ -669,7 +668,19 @@ function UsersTab() {
                   </label>
                   <button className="org-btn" type="submit">Create Invite</button>
                   {inviteCreateMsg && <div className="form-status-message">{inviteCreateMsg}</div>}
-                  {createdInvite && <div className="users-created-invite">Invite code: {createdInvite.code}</div>}
+                  {createdInvite && (
+                    <div className="users-created-invite">
+                      Invite code: <span style={{ fontFamily: 'monospace' }}>{createdInvite.code}</span>
+                      <button
+                        type="button"
+                        style={{ marginLeft: 8 }}
+                        onClick={() => {
+                          navigator.clipboard.writeText(createdInvite.code);
+                          setInviteCreateMsg("Copied to clipboard!");
+                        }}
+                      >Copy</button>
+                    </div>
+                  )}
                 </form>
               )}
             </div>
