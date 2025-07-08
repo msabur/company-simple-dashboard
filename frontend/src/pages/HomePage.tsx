@@ -647,6 +647,14 @@ function UsersTab() {
                       <span style={{ fontFamily: 'monospace' }}>{invite.code}</span> (uses: {invite.uses}/{invite.max_uses})
                       {invite.expires_at && <span style={{ marginLeft: 8, color: '#64748b' }}>Expires: {invite.expires_at.slice(0, 16).replace('T', ' ')}</span>}
                       <button className="org-btn org-btn-danger" style={{ marginLeft: 8 }} onClick={() => handleRevokeInvite(invite.id)}>Revoke</button>
+                      <button
+                        type="button"
+                        className="org-btn users-copy-link-btn"
+                        onClick={() => navigator.clipboard.writeText(invite.code)}
+                        title="Copy invite link"
+                      >
+                        Copy link
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -668,19 +676,6 @@ function UsersTab() {
                   </label>
                   <button className="org-btn" type="submit">Create Invite</button>
                   {inviteCreateMsg && <div className="form-status-message">{inviteCreateMsg}</div>}
-                  {createdInvite && (
-                    <div className="users-created-invite">
-                      Invite code: <span style={{ fontFamily: 'monospace' }}>{createdInvite.code}</span>
-                      <button
-                        type="button"
-                        style={{ marginLeft: 8 }}
-                        onClick={() => {
-                          navigator.clipboard.writeText(createdInvite.code);
-                          setInviteCreateMsg("Copied to clipboard!");
-                        }}
-                      >Copy</button>
-                    </div>
-                  )}
                 </form>
               )}
             </div>
