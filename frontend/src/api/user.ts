@@ -154,3 +154,52 @@ export async function resetPassword(code: string, new_password: string) {
     }
     return data;
 }
+
+export async function listLinkedAccounts() {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${BASE_URL}/linked-accounts`, {
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.detail || "Failed to fetch linked accounts");
+    }
+    return data;
+}
+
+export async function linkAccount({ provider, token: oauthToken }: { provider: string; token: string }) {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${BASE_URL}/link-account`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ provider, token: oauthToken })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.detail || `Failed to link ${provider} account`);
+    }
+    return data;
+}
+
+export async function unlinkAccount({ provider, email }: { provider: string; email: string }) {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${BASE_URL}/unlink-account`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ provider, email })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.detail || `Failed to unlink ${provider} account`);
+    }
+    return data;
+}

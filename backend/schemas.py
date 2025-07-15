@@ -132,3 +132,21 @@ class OrganizationInviteAccept(BaseModel):
 class EmailVerificationRequest(BaseModel):
     email: EmailStr
     code: str
+
+class LinkedAccountOut(BaseModel):
+    id: int
+    provider: str
+    email: str
+    picture_url: str | None
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+class LinkAccountRequest(BaseModel):
+    provider: str  # 'google' or 'github'
+    token: str     # OAuth token or code
+
+class UnlinkAccountRequest(BaseModel):
+    provider: str  # 'google' or 'github'
+    email: str

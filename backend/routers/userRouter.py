@@ -83,21 +83,46 @@ def google_auth(payload: schemas.GoogleAuthRequest, db: Session = Depends(get_db
     user_data = auth.verify_google_token(payload.token)
     if not user_data or "email" not in user_data:
         raise HTTPException(status_code=400, detail="Invalid Google token")
-    db_user = db.query(models.User).filter_by(email=user_data["email"]).first()
-    if db_user:
-        if db_user.auth_provider != "google":
-            raise HTTPException(status_code=400, detail="Account exists with a different provider")
+    google_email = user_data["email"]
+    # Check for linked account first
+    linked = db.query(models.LinkedAccount).filter_by(provider="google", email=google_email).first()
+    if linked:
+        db_user = db.query(models.User).filter_by(id=linked.user_id).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found for linked account")
     else:
-        db_user = models.User(
-            email=user_data["email"],
-            full_name=user_data.get("name", ""),
-            username=user_data["email"].split("@")[0],
-            auth_provider="google",
-            picture_url=user_data.get("picture", "")
-        )
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
+        # If a user exists with this Google email, link it for backward compatibility
+        db_user = db.query(models.User).filter_by(email=google_email).first()
+        if db_user:
+            # Create LinkedAccount for this user
+            linked = models.LinkedAccount(
+                user_id=db_user.id,
+                provider="google",
+                email=google_email,
+                picture_url=user_data.get("picture", "")
+            )
+            db.add(linked)
+            db.commit()
+        else:
+            # No user with this email, create a new user and LinkedAccount
+            db_user = models.User(
+                email=google_email,
+                full_name=user_data.get("name", ""),
+                username=google_email.split("@")[0],
+                auth_provider="google",
+                picture_url=user_data.get("picture", "")
+            )
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+            linked = models.LinkedAccount(
+                user_id=db_user.id,
+                provider="google",
+                email=google_email,
+                picture_url=user_data.get("picture", "")
+            )
+            db.add(linked)
+            db.commit()
     token = auth.create_token({"user_id": db_user.id})
     return {"token": token, "user": schemas.UserOut.model_validate(db_user)}
 
@@ -130,9 +155,8 @@ def github_auth(payload: dict, db: Session = Depends(get_db)):
     if user_resp.status_code != 200:
         raise HTTPException(status_code=400, detail="Failed to get GitHub user info")
     user_data = user_resp.json()
-    email = user_data.get("email")
-    if not email:
-        # Fallback: fetch emails endpoint
+    github_email = user_data.get("email")
+    if not github_email:
         emails_resp = requests.get(
             "https://api.github.com/user/emails",
             headers={"Authorization": f"Bearer {access_token}"}
@@ -140,25 +164,46 @@ def github_auth(payload: dict, db: Session = Depends(get_db)):
         if emails_resp.status_code == 200:
             emails = emails_resp.json()
             primary = next((e for e in emails if e.get("primary")), None)
-            email = primary["email"] if primary else emails[0]["email"] if emails else None
-    if not email:
+            github_email = primary["email"] if primary else emails[0]["email"] if emails else None
+    if not github_email:
         raise HTTPException(status_code=400, detail="GitHub email not found")
-    # Find or create user
-    db_user = db.query(models.User).filter_by(email=email).first()
-    if db_user:
-        if db_user.auth_provider != "github":
-            raise HTTPException(status_code=400, detail="Account exists with a different provider")
+    # Check for linked account first
+    linked = db.query(models.LinkedAccount).filter_by(provider="github", email=github_email).first()
+    if linked:
+        db_user = db.query(models.User).filter_by(id=linked.user_id).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found for linked account")
     else:
-        db_user = models.User(
-            email=email,
-            full_name=user_data.get("name") or user_data.get("login"),
-            username=user_data.get("login"),
-            auth_provider="github",
-            picture_url=user_data.get("avatar_url", "")
-        )
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
+        # If a user exists with this GitHub email, link it for backward compatibility
+        db_user = db.query(models.User).filter_by(email=github_email).first()
+        if db_user:
+            linked = models.LinkedAccount(
+                user_id=db_user.id,
+                provider="github",
+                email=github_email,
+                picture_url=user_data.get("avatar_url", "")
+            )
+            db.add(linked)
+            db.commit()
+        else:
+            db_user = models.User(
+                email=github_email,
+                full_name=user_data.get("name") or user_data.get("login"),
+                username=user_data.get("login"),
+                auth_provider="github",
+                picture_url=user_data.get("avatar_url", "")
+            )
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+            linked = models.LinkedAccount(
+                user_id=db_user.id,
+                provider="github",
+                email=github_email,
+                picture_url=user_data.get("avatar_url", "")
+            )
+            db.add(linked)
+            db.commit()
     token = auth.create_token({"user_id": db_user.id})
     from schemas import UserOut
     return {"token": token, "user": UserOut.model_validate(db_user)}
@@ -286,3 +331,85 @@ def reset_password(code: str, new_password: str, db: Session = Depends(get_db)):
     db.commit()
     
     return {"detail":'Success'}
+@router.get("/linked-accounts", response_model=list[schemas.LinkedAccountOut])
+def list_linked_accounts(user_id: int = Depends(auth.get_current_user_id), db: Session = Depends(get_db)):
+    accounts = db.query(models.LinkedAccount).filter_by(user_id=user_id).all()
+    return accounts
+
+@router.post("/link-account")
+def link_account(payload: schemas.LinkAccountRequest, user_id: int = Depends(auth.get_current_user_id), db: Session = Depends(get_db)):
+    provider = payload.provider
+    token = payload.token
+    # Check if already linked
+    existing = db.query(models.LinkedAccount).filter_by(user_id=user_id, provider=provider).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Account already linked")
+    # Verify token and get email
+    if provider == "google":
+        user_data = auth.verify_google_token(token)
+        if not user_data or "email" not in user_data:
+            raise HTTPException(status_code=400, detail="Invalid Google token")
+        email = user_data["email"]
+        picture_url = user_data.get("picture")
+    elif provider == "github":
+        token_resp = requests.post(
+            "https://github.com/login/oauth/access_token",
+            headers={"Accept": "application/json"},
+            data={
+                "client_id": VITE_GITHUB_CLIENT_ID,
+                "client_secret": GITHUB_CLIENT_SECRET,
+                "code": token,
+            },
+        )
+        if token_resp.status_code != 200:
+            raise HTTPException(status_code=400, detail="Failed to get GitHub token")
+        token_data = token_resp.json()
+        access_token = token_data.get("access_token")
+        if not access_token:
+            raise HTTPException(status_code=400, detail="No access token from GitHub")
+        user_resp = requests.get(
+            "https://api.github.com/user",
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+        if user_resp.status_code != 200:
+            raise HTTPException(status_code=400, detail="Failed to get GitHub user info")
+        user_data = user_resp.json()
+        email = user_data.get("email")
+        if not email:
+            emails_resp = requests.get(
+                "https://api.github.com/user/emails",
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            if emails_resp.status_code == 200:
+                emails = emails_resp.json()
+                primary = next((e for e in emails if e.get("primary")), None)
+                email = primary["email"] if primary else emails[0]["email"] if emails else None
+        picture_url = user_data.get("avatar_url")
+        if not email:
+            raise HTTPException(status_code=400, detail="GitHub email not found")
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported provider")
+    # Check if email is already linked to another user
+    email_exists = db.query(models.LinkedAccount).filter_by(email=email).first()
+    if email_exists:
+        raise HTTPException(status_code=400, detail="This social account is already linked to another user")
+    # Link account
+    linked = models.LinkedAccount(
+        user_id=user_id,
+        provider=provider,
+        email=email,
+        picture_url=picture_url
+    )
+    db.add(linked)
+    db.commit()
+    db.refresh(linked)
+    return {"detail": f"{provider.capitalize()} account linked"}
+
+@router.post("/unlink-account")
+def unlink_account(payload: schemas.UnlinkAccountRequest, user_id: int = Depends(auth.get_current_user_id), db: Session = Depends(get_db)):
+    account = db.query(models.LinkedAccount).filter_by(user_id=user_id, provider=payload.provider, email=payload.email).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Linked account not found")
+    db.delete(account)
+    db.commit()
+    return {"detail": f"{payload.provider.capitalize()} account unlinked"}

@@ -1,10 +1,10 @@
 import { useState, useEffect, type JSX } from "react";
 import { observer } from "mobx-react-lite";
 import { authStore } from "../store/authStore";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import "./HomePage.css";
 import logo from "/logo.png";
-import { changePassword, updateInfo } from "../api/user";
+import { changePassword, updateInfo, listLinkedAccounts, linkAccount, unlinkAccount } from "../api/user";
 import {
   getMyOrganizations,
   createOrganization,
@@ -18,6 +18,7 @@ import {
 import { updateMemberRoles } from "../api/org";
 import { listUserInvites, acceptInvite } from "../api/org";
 import { listOrgInvites, createOrgInvite, revokeOrgInvite } from "../api/org";
+import { GoogleLogin } from "@react-oauth/google";
 
 const TABS = [
   { key: "dashboard", label: "Dashboard", icon: (
@@ -251,7 +252,97 @@ function SecurityTab() {
 }
 
 function LinkedTab() {
-  return <div className="tab-content">Linked accounts go here.</div>;
+  const [linked, setLinked] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [unlinking, setUnlinking] = useState<string | null>(null);
+  const [, navigate] = useLocation();
+
+  const fetchLinked = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await listLinkedAccounts();
+      setLinked(data);
+    } catch (e: any) {
+      setError(e.message || "Failed to load linked accounts");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchLinked(); }, []);
+
+  const handleUnlink = async (provider: string, email: string) => {
+    setUnlinking(provider + email);
+    setMessage("");
+    try {
+      await unlinkAccount({ provider, email });
+      setMessage(`${provider.charAt(0).toUpperCase() + provider.slice(1)} account unlinked.`);
+      fetchLinked();
+    } catch (e: any) {
+      setMessage(e.message || "Failed to unlink account");
+    } finally {
+      setUnlinking(null);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setMessage("");
+    if (credentialResponse.credential) {
+      try {
+        await linkAccount({ provider: "google", token: credentialResponse.credential });
+        setMessage("Google account linked!");
+        fetchLinked();
+      } catch (err: any) {
+        setMessage(err.message || "Failed to link Google account");
+      }
+    }
+  };
+
+  const handleGithubLink = () => {
+    const params = new URLSearchParams({
+      client_id: import.meta.env.VITE_GITHUB_CLIENT_ID,
+      redirect_uri: `${window.location.origin}/auth/github/callback/link`,
+      scope: "read:user user:email"
+    });
+    window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
+  };
+
+  return (
+    <div className="tab-content linked-tab">
+      <h3>Linked Accounts</h3>
+      {loading ? <div>Loading...</div> : error ? <div className="form-status-message error-message">{error}</div> : (
+        <div className="linked-accounts-list">
+          {["google", "github"].map(provider => {
+            const acc = linked.find(a => a.provider === provider);
+            return (
+              <div key={provider} className="linked-account-row">
+                <span className="linked-provider-label">{provider.charAt(0).toUpperCase() + provider.slice(1)}</span>
+                {acc ? (
+                  <>
+                    <span className="linked-email">: {acc.email}</span>
+                    <button className="org-btn org-btn-danger" onClick={() => handleUnlink(provider, acc.email)} disabled={unlinking === provider + acc.email}>
+                      {unlinking === provider + acc.email ? "Unlinking..." : "Unlink"}
+                    </button>
+                  </>
+                ) : provider === "google" ? (
+                  <GoogleLogin onSuccess={handleGoogleSuccess} text="continue_with" width={220} />
+                ) : (
+                  <button className="org-btn github-login-btn" onClick={handleGithubLink}>
+                    <img src="/github.svg" alt="GitHub" width={20} height={20} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                    Link GitHub
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {message && <div className="form-status-message">{message}</div>}
+    </div>
+  );
 }
 
 function OrgsTab() {

@@ -30,6 +30,7 @@ class User(Base):
     created_organizations = relationship("Organization", back_populates="created_by")
     organizations = relationship("OrganizationMember", back_populates="user", cascade="all, delete-orphan")
     invites = relationship("OrganizationInvite", back_populates="target_user", cascade="all, delete-orphan")
+    linked_accounts = relationship("LinkedAccount", back_populates="user", cascade="all, delete-orphan")
 
 class VerificationCode(Base):
     __tablename__ = "verification_codes"
@@ -91,3 +92,14 @@ class OrganizationInvite(Base):
     __table_args__ = (
         UniqueConstraint("org_id", "code", name="uq_org_code"),
     )
+
+class LinkedAccount(Base):
+    __tablename__ = "linked_accounts"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    provider: Mapped[str] = mapped_column()  # 'google', 'github', etc.
+    email: Mapped[str] = mapped_column(unique=True, index=True)
+    picture_url: Mapped[str | None] = mapped_column(default=None)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="linked_accounts")

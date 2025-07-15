@@ -247,6 +247,14 @@
   background: #1d4ed8;
 }
 
+.github-login-btn {
+  background: #555555;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .profile-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
