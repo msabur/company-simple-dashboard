@@ -165,12 +165,11 @@ export default function AuthPage() {
         {step === "email" && (
           <form className="auth-form" onSubmit={handleContinue}>
             <div style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
-              <GoogleLogin onSuccess={handleGoogleSuccess} useOneTap />
+              <GoogleLogin onSuccess={handleGoogleSuccess} useOneTap theme="filled_blue" />
               {/* GitHub Login Button */}
               <button
                 type="button"
-                className="github-login-btn"
-                style={{ display: "flex", alignItems: "center", gap: 8, background: "#24292f", color: "#fff", border: "none", borderRadius: 4, padding: "0.5rem 1rem", cursor: "pointer" }}
+                id="auth-github-btn"
                 onClick={() => {
                   const params = new URLSearchParams({
                     client_id: import.meta.env.VITE_GITHUB_CLIENT_ID,

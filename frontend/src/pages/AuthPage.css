@@ -1,10 +1,33 @@
+/* GitHub login button for AuthPage (uses theme variables, fixed width to match Google button) */
+#auth-github-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: background 0.15s, color 0.15s, border 0.15s;
+  width: 220px;
+  min-height: 40px;
+  justify-content: center;
+}
+#auth-github-btn:hover {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
 .auth-form-container-outer {
   max-width: 400px;
   margin: 40px auto;
   padding: 2rem;
   background: var(--color-surface);
   border-radius: 8px;
-  box-shadow: 0 2px 8px var(--color-card-shadow);
+  box-shadow: 0 2px 16px var(--color-auth-shadow);
 }
 
 .auth-form-container-outer .logo {
@@ -15,7 +38,7 @@
   max-width: 90%;
   margin: 40px auto;
   border-radius: inherit;
-  box-shadow: inherit;
+  box-shadow: 0 2px 16px var(--color-auth-shadow);
   padding: inherit;
   background: var(--color-surface);
 }
