@@ -965,14 +965,6 @@ const TAB_COMPONENTS: Record<string, (props: { setTab: (tab: string) => void }) 
 export const HomePage = observer(() => {
   const [tab, setTab] = useState("dashboard");
   const TabComponent = TAB_COMPONENTS[tab];
-  if (!authStore.user) {
-    return (
-      <div className="home-page">
-        <h1>Welcome to the product!</h1>
-        <p>Please <Link href="/auth">Log in or Sign up</Link>.</p>
-      </div>
-    );
-  }
   return (
     <div className="home-layout">
       <aside className="tab-sidebar">

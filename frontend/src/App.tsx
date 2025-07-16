@@ -76,7 +76,7 @@ export default observer(function App() {
               <ResetPasswordPage />
             </Route>
             <Route>
-              <HomePage />
+              {authStore.user ? <HomePage /> : <AuthPage />}
             </Route>
           </Switch>
         </main>

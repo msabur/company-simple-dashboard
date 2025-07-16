@@ -108,7 +108,12 @@ def join_organization(org_id: int, db: Session = Depends(get_db), user_id: int =
 
 @router.get("/{org_id}/members", response_model=List[schemas.OrganizationMemberOut])
 def list_members(org_id: int, db: Session = Depends(get_db), _=Depends(require_org_member)):
-    members = db.query(models.OrganizationMember).filter_by(organization_id=org_id).all()
+    members = (
+        db.query(models.OrganizationMember)
+        .filter_by(organization_id=org_id)
+        .order_by(models.OrganizationMember.created_at)
+        .all()
+    )
     return [schemas.OrganizationMemberOut.model_validate(m) for m in members]
 
 @router.patch("/{org_id}/members/{user_id}")

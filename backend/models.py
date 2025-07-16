@@ -67,6 +67,7 @@ class OrganizationMember(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     organization_id: Mapped[int] = mapped_column(ForeignKey("organizations.id"))
     roles: Mapped[list[str]] = mapped_column(sqlalchemy.dialects.postgresql.ARRAY(String), default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="organizations")
     organization = relationship("Organization", back_populates="members")
