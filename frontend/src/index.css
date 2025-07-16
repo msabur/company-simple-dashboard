@@ -1,4 +1,42 @@
 :root {
+  --color-bg: #fff;
+  --color-bg-alt: #f3f4f6;
+  --color-surface: #fff;
+  --color-border: #e5e7eb;
+  --color-text: #374151;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-card: #f9fafb;
+  --color-card-shadow: rgba(0, 0, 0, 0.04);
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+  --color-muted: #64748b;
+  --color-input-bg: #f9fafb;
+  --color-input-border: #d1d5db;
+  --color-avatar-bg: #e0e7ef;
+  --color-avatar-text: #2563eb;
+}
+
+.dark-theme {
+  --color-bg: #181a20;
+  --color-bg-alt: #23262f;
+  --color-surface: #23262f;
+  --color-border: #2d2f36;
+  --color-text: #e5e7eb;
+  --color-primary: #60a5fa;
+  --color-primary-hover: #2563eb;
+  --color-card: #23262f;
+  --color-card-shadow: rgba(0,0,0,0.25);
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+  --color-muted: #94a3b8;
+  --color-input-bg: #23262f;
+  --color-input-border: #374151;
+  --color-avatar-bg: #374151;
+  --color-avatar-text: #60a5fa;
+}
+
+:root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
 }
@@ -6,6 +44,7 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
+  background: var(--color-bg);
 }
 
 body {
@@ -13,6 +52,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   font-size: 16px;
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 .nav-container {
@@ -22,8 +63,8 @@ body {
   right: 50%;
   margin-left: -50vw;
   margin-right: -50vw;
-  background: #f3f4f6;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--color-bg-alt);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .navbar {
@@ -35,7 +76,7 @@ body {
 }
 
 .navbar a {
-  color: #2563eb;
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 500;
 }
@@ -50,7 +91,7 @@ body {
 
 .logout-btn {
   background: none;
-  color: #2563eb;
+  color: var(--color-primary);
   border: none;
   font-size: 1rem;
   cursor: pointer;
@@ -59,5 +100,14 @@ body {
 }
 
 .logout-btn:hover {
-  color: #1d4ed8;
+  color: var(--color-primary-hover);
+}
+
+main {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+* {
+  transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
 }

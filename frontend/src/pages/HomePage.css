@@ -1,23 +1,25 @@
 .home-page {
+  color: var(--color-text);
   text-align: center;
   margin-top: 4rem;
+  background: var(--color-bg);
 }
 
 .home-layout {
   display: flex;
-  min-height: 60vh;
+  min-height: calc(100vh - 4rem);
   margin-top: 2rem;
-  background: #fff;
+  background: var(--color-bg);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px var(--color-card-shadow);
   margin-left: 1rem;
   margin-right: 1rem;
 }
 
 .tab-sidebar {
   min-width: 180px;
-  background: #fff;
-  border-right: 1px solid #e5e7eb;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   padding: 2rem 0.5rem;
@@ -41,7 +43,7 @@
 .tab-btn {
   background: none;
   border: none;
-  color: #374151;
+  color: var(--color-text);
   font-size: 1.1rem;
   padding: 0.75rem 1rem;
   text-align: left;
@@ -54,13 +56,13 @@
 }
 
 .tab-btn.active {
-  background: #dce7ff;
+  background: var(--color-bg-alt);
   /* color: #fff; */
 }
 
 .tab-btn:hover:not(.active) {
-  background: #e0e7ef;
-  color: #374151;
+  background: var(--color-card);
+  color: var(--color-text);
 }
 
 .tab-icon {
@@ -74,11 +76,11 @@
   flex: 1;
   padding: 2rem 2.5rem;
   min-width: 0;
+  background: var(--color-bg);
 }
 
 .tab-content {
-  font-size: 1.15rem;
-  color: #374151;
+  color: var(--color-text);
 }
 
 .dashboard-cards {
@@ -98,9 +100,9 @@
 }
 
 .dashboard-card {
-  background: #f9fafb;
+  background: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 4px var(--color-card-shadow);
   padding: 1.5rem 2rem;
   display: flex;
   flex-direction: column;
@@ -115,7 +117,7 @@
   flex: 0 0 220px;
   align-items: center;
   justify-content: flex-start;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 2px 8px var(--color-primary-shadow, rgba(37, 99, 235, 0.08));
   padding: 1.5rem 1.2rem;
 }
 
@@ -123,8 +125,8 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: #e0e7ef;
-  color: #2563eb;
+  background: var(--color-avatar-bg);
+  color: var(--color-avatar-text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,7 +155,7 @@
 }
 
 .user-info-email {
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 1rem;
 }
 
@@ -165,13 +167,14 @@
   cursor: pointer;
   border: 2px solid transparent;
   transition: border 0.15s, box-shadow 0.15s;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 4px var(--color-card-shadow);
+  background: var(--color-surface);
 }
 
 .dashboard-link-card:hover {
-  border: 2px solid #2563eb;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.1);
-  background: #f3f6fd;
+  border: 2px solid var(--color-primary);
+  box-shadow: 0 4px 16px var(--color-primary-shadow, rgba(37, 99, 235, 0.1));
+  background: var(--color-bg-alt);
 }
 
 .dashboard-link-card h3 {
