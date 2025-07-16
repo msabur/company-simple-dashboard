@@ -977,7 +977,7 @@ export const HomePage = observer(() => {
     <div className="home-layout">
       <aside className="tab-sidebar">
         <div className="sidebar-logo-container">
-          <img src={logo} alt="Logo" className="sidebar-logo" />
+          <img alt="Logo" className="logo sidebar-logo" />
         </div>
         {TABS.map(t => (
           <button

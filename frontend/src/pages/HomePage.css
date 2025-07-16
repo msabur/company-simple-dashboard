@@ -187,7 +187,7 @@
 
 .dashboard-link-card p {
   margin: 0;
-  color: #374151;
+  color: var(--color-text);
 }
 
 .password-change-form {
@@ -204,12 +204,14 @@
 
 .password-change-form input {
   padding: 0.5rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-input-border);
   border-radius: 4px;
+  background: var(--color-input-bg);
+  color: var(--color-text);
 }
 
 .password-change-form button {
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   padding: 0.75rem;
@@ -220,7 +222,7 @@
 }
 
 .password-change-form button:hover {
-  background: #1d4ed8;
+  background: var(--color-primary-hover);
 }
 
 .form-status-message {
@@ -236,7 +238,7 @@
 }
 
 .org-btn {
-  background: #2563eb;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -247,7 +249,7 @@
 }
 
 .org-btn:hover {
-  background: #1d4ed8;
+  background: var(--color-primary-hover);
 }
 
 .github-login-btn {
@@ -282,32 +284,36 @@
 .profile-form select {
   width: 100%;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-input-border);
   border-radius: 4px;
   font-size: 1rem;
-  background: #f9fafb;
+  background: var(--color-input-bg);
+  color: var(--color-text);
   transition: border 0.15s;
 }
 
 .profile-form input:focus,
 .profile-form select:focus {
-  border-color: #4f8cff;
+  border-color: var(--color-primary);
   outline: none;
 }
 
 .profile-form input:disabled,
 .profile-form select:disabled,
 .password-change-form input:disabled {
-  background: #e5e7eb;
+  background: repeating-linear-gradient(135deg, var(--color-input-disabled-bg) 0 8px, rgba(0,0,0,0.03) 8px 16px);
   color: #9ca3af;
   cursor: not-allowed;
+  opacity: 1;
+  border-color: var(--color-input-border);
+  box-shadow: none;
 }
 
 .profile-form button[type="submit"] {
   grid-column: 1 / -1;
   margin-top: 0.5rem;
   padding: 0.7rem 0;
-  background: #4f8cff;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -318,12 +324,12 @@
 }
 
 .profile-form button[type="submit"]:hover {
-  background: #2563eb;
+  background: var(--color-primary-hover);
 }
 
 .social-user-hint {
   font-size: 0.89em;
-  color: #475569;
+  color: var(--color-muted);
 }
 
 .social-user-hint-margin {
@@ -340,10 +346,11 @@
 .invitations-code-input {
   min-width: 200px;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-input-border);
   border-radius: 4px;
   font-size: 1rem;
-  background: #f9fafb;
+  background: var(--color-input-bg);
+  color: var(--color-text);
   transition: border 0.15s;
 }
 
@@ -443,40 +450,43 @@
 .orgs-dropdown, .users-dropdown {
   width: 220px;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-input-border);
   border-radius: 4px;
   font-size: 1rem;
-  background: #f9fafb;
+  background: var(--color-input-bg);
+  color: var(--color-text);
   margin-bottom: 8px;
   transition: border 0.15s;
 }
 .orgs-dropdown:focus, .users-dropdown:focus {
-  border-color: #4f8cff;
+  border-color: var(--color-primary);
   outline: none;
 }
 .orgs-input, .users-input {
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-input-border);
   border-radius: 4px;
   font-size: 1rem;
-  background: #f9fafb;
+  background: var(--color-input-bg);
+  color: var(--color-text);
   margin-right: 8px;
   transition: border 0.15s;
 }
 .orgs-input:focus, .users-input:focus {
-  border-color: #4f8cff;
+  border-color: var(--color-primary);
   outline: none;
 }
 .users-role-select {
   padding: 0.4rem 0.7rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-input-border);
   border-radius: 4px;
   font-size: 1rem;
-  background: #fff;
+  background: var(--color-input-bg);
+  color: var(--color-text);
   transition: border 0.15s;
 }
 .users-role-select:focus {
-  border-color: #4f8cff;
+  border-color: var(--color-primary);
   outline: none;
 }
 .users-me-label {
@@ -583,9 +593,9 @@
 }
 
 .users-copy-link-btn {
-  background: #f3f4f6;
-  border: 1px solid #cbd5e1;
-  color: #334155;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
   border-radius: 4px;
   padding: 0.6rem 1.3rem;
   font-size: 1rem;
@@ -597,7 +607,7 @@
   display: inline-block;
 }
 .users-copy-link-btn:hover {
-  background: #e5e7eb;
-  border-color: #94a3b8;
-  color: #1e293b;
+  background: var(--color-surface);
+  border-color: var(--color-muted);
+  color: var(--color-primary);
 }
