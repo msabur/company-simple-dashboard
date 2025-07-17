@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { GoogleLogin } from "@react-oauth/google";
 import { signup, login, googleAuth, checkEmail, verifyEmail, resendVerificationCode, sendPasswordResetEmail } from "../api/user";
 import { authStore } from "../store/authStore";
-import "./AuthPage.css"
+import "./AuthPage.css";
 
 export default function AuthPage() {
   const [step, setStep] = useState<
@@ -65,7 +65,7 @@ export default function AuthPage() {
       const res = await login({ email, password });
       authStore.token = res.token;
       authStore.user = res.user;
-      navigate("/");
+      navigate("/dashboard");
     } catch (err: any) {
       if (err.message === "Email not verified") {
         setStep("verification");
@@ -96,7 +96,7 @@ export default function AuthPage() {
       const res = await login({ email, password });
       authStore.token = res.token;
       authStore.user = res.user;
-      navigate("/");
+      navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Verification failed");
     } finally {
@@ -123,7 +123,7 @@ export default function AuthPage() {
         const res = await googleAuth({ token: credentialResponse.credential });
         authStore.token = res.token;
         authStore.user = res.user;
-        navigate("/");
+        navigate("/dashboard");
       } catch (err: any) {
         setError(err.message || "Google login failed");
       }

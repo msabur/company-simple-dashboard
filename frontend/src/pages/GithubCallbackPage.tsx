@@ -41,7 +41,7 @@ export default function GithubCallbackPage() {
         .then(res => {
           authStore.token = res.token;
           authStore.user = res.user;
-          navigate("/");
+          navigate("/dashboard");
         })
         .catch(err => {
           setError(err.message || "GitHub login failed");

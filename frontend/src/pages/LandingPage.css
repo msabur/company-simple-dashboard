@@ -1,0 +1,159 @@
+.landing-page {
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+.landing-hero {
+  background: var(--color-primary);
+  color: #fff;
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.dark-theme .landing-hero {
+  color: #e5e7eb;
+}
+
+.landing-hero-content h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: inherit;
+}
+
+.landing-hero-content p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: inherit;
+}
+
+.landing-hero-buttons a {
+  margin: 0 0.5rem;
+}
+
+.btn-primary, .btn-secondary {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-weight: bold;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: #fff;
+  color: var(--color-primary);
+}
+.dark-theme .btn-primary {
+  background-color: var(--color-bg-alt);
+  color: var(--color-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-bg-alt);
+}
+.dark-theme .btn-primary:hover {
+  background-color: var(--color-surface);
+}
+
+.btn-secondary {
+  border: 2px solid #fff;
+  color: #fff;
+}
+.dark-theme .btn-secondary {
+  border: 2px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+.dark-theme .btn-secondary:hover {
+  background-color: var(--color-bg-alt);
+}
+
+.landing-section {
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.alt-bg {
+  background: var(--color-bg-alt);
+}
+
+.features-grid,
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.feature-card,
+.plan-card {
+  background: var(--color-card);
+  color: var(--color-text);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px var(--color-card-shadow);
+  text-align: center;
+}
+
+.feature-card .icon {
+  font-size: 2rem;
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+}
+
+.capabilities-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 1.5rem;
+  text-align: left;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.capabilities-list li {
+  font-size: 1.1rem;
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text);
+}
+
+.testimonials blockquote {
+  font-style: italic;
+  font-size: 1.2rem;
+  max-width: 700px;
+  margin: auto;
+  margin-top: 2rem;
+  color: var(--color-text);
+}
+
+.testimonials cite {
+  display: block;
+  margin-top: 1rem;
+  font-style: normal;
+  color: var(--color-muted);
+}
+
+.landing-footer {
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  padding: 2rem 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.landing-footer a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.landing-footer a:hover {
+  text-decoration: underline;
+}

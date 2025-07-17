@@ -11,6 +11,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import LinkedGithubCallbackPage from "./pages/LinkedGithubCallbackPage";
 
 import "./index.css";
+import LandingPage from "./pages/LandingPage";
 
 export default observer(function App() {
   const [, navigate] = useLocation();
@@ -43,23 +44,29 @@ export default observer(function App() {
       <div>
         <div className="nav-container">
           <nav className="navbar">
+            <div className="navbar-left">
+              <Link href="/" className="navbar-home-link">Home</Link>
+              {authStore.user ? (
+                <button className="logout-btn" onClick={handleLogout}>Logout</button>
+              ) : (
+                <Link href="/auth">Log in or Sign up</Link>
+              )}
+            </div>
+            <div className="navbar-spacer" />
             <button
-              className="logout-btn"
-              style={{ marginRight: "auto" }}
+              className="theme-toggle-btn"
               onClick={() => setDarkMode((d) => !d)}
               aria-label="Toggle dark mode"
             >
               {darkMode ? "🌙 Dark" : "☀️ Light"}
             </button>
-            {authStore.user ? (
-              <button className="logout-btn" onClick={handleLogout}>Logout</button>
-            ) : (
-              <Link href="/auth">Log in or Sign up</Link>
-            )}
           </nav>
         </div>
         <main>
           <Switch>
+            <Route path="/">
+              <LandingPage />
+            </Route>
             <Route path="/auth">
               <AuthPage />
             </Route>
@@ -75,7 +82,7 @@ export default observer(function App() {
             <Route path="/reset-password">
               <ResetPasswordPage />
             </Route>
-            <Route>
+            <Route path="/dashboard">
               {authStore.user ? <HomePage /> : <AuthPage />}
             </Route>
           </Switch>

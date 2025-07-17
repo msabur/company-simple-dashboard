@@ -1,9 +1,7 @@
 import { useState, useEffect, type JSX } from "react";
 import { observer } from "mobx-react-lite";
 import { authStore } from "../store/authStore";
-import { Link, useLocation } from "wouter";
 import "./HomePage.css";
-import logo from "/logo.png";
 import { changePassword, updateInfo, listLinkedAccounts, linkAccount, unlinkAccount } from "../api/user";
 import {
   getMyOrganizations,
@@ -17,7 +15,7 @@ import {
 } from "../api/org";
 import { updateMemberRoles } from "../api/org";
 import { listUserInvites, acceptInvite } from "../api/org";
-import { listOrgInvites, createOrgInvite, revokeOrgInvite } from "../api/org";
+import { listOrgInvites, revokeOrgInvite } from "../api/org";
 import { GoogleLogin } from "@react-oauth/google";
 
 const TABS = [
@@ -257,7 +255,6 @@ function LinkedTab() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [unlinking, setUnlinking] = useState<string | null>(null);
-  const [, navigate] = useLocation();
 
   const fetchLinked = async () => {
     setLoading(true);
@@ -550,7 +547,6 @@ function UsersTab() {
   const [inviteMaxUses, setInviteMaxUses] = useState(1);
   const [inviteExpiresAt, setInviteExpiresAt] = useState("");
   const [inviteCreateMsg, setInviteCreateMsg] = useState("");
-  const [createdInvite, setCreatedInvite] = useState<any>(null);
 
   useEffect(() => {
     getMyOrganizations()
@@ -623,7 +619,6 @@ function UsersTab() {
   const handleCreateInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setInviteCreateMsg("");
-    setCreatedInvite(null);
     try {
       const payload: any = { max_uses: inviteMaxUses };
       if (inviteTargetUser) payload.target_username = inviteTargetUser;
@@ -632,8 +627,6 @@ function UsersTab() {
         const local = new Date(inviteExpiresAt);
         payload.expires_at = local.toISOString();
       }
-      const invite = await createOrgInvite(selectedOrg.id, payload);
-      setCreatedInvite(invite);
       setInviteCreateMsg("Invite created!");
       fetchInvites();
       setInviteTargetUser("");
