@@ -25,7 +25,7 @@ export default function LinkedGithubCallbackPage() {
     linkAccount({ provider: "github", token: code })
       .then(() => {
         setMessage("GitHub account linked!");
-        setTimeout(() => navigate("/"), 1500);
+        setTimeout(() => navigate("/dashboard"), 1500);
       })
       .catch(err => {
         setError(err.message || "GitHub linking failed");

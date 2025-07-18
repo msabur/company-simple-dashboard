@@ -26,10 +26,10 @@ export default observer(function App() {
   });
 
   useEffect(() => {
-    const root = document.getElementById("root");
-    if (root) {
-      if (darkMode) root.classList.add("dark-theme");
-      else root.classList.remove("dark-theme");
+    const body = document.querySelector("body");
+    if (body) {
+      if (darkMode) body.classList.add("dark-theme");
+      else body.classList.remove("dark-theme");
     }
     localStorage.setItem("darkMode", String(darkMode));
   }, [darkMode]);
@@ -45,11 +45,14 @@ export default observer(function App() {
         <div className="nav-container">
           <nav className="navbar">
             <div className="navbar-left">
-              <Link href="/" className="navbar-home-link">Home</Link>
+              <Link href="/" className="navbar-item">Home</Link>
               {authStore.user ? (
-                <button className="logout-btn" onClick={handleLogout}>Logout</button>
+                <>
+                  <Link href="/dashboard" className="navbar-item">Dashboard</Link>
+                  <button className="logout-btn" onClick={handleLogout}>Logout</button>
+                </>
               ) : (
-                <Link href="/auth">Log in or Sign up</Link>
+                <Link href="/auth" className="navbar-item">Log in or Sign up</Link>
               )}
             </div>
             <div className="navbar-spacer" />
