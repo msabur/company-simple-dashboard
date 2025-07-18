@@ -99,7 +99,7 @@ body {
   flex: 1 1 auto;
 }
 
-.navbar-home-link {
+.navbar-item {
   font-weight: bold;
   text-decoration: none;
   color: var(--color-primary);
