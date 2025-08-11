@@ -6,19 +6,22 @@ import random, string
 from datetime import datetime, timezone
 
 from helpers import auth
+
+def get_current_user_id(user=Depends(auth.get_current_user)):
+    return user.id
 from database import get_db
 import models, schemas
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 
 # --- Dependencies for role-based access ---
-def require_org_member(org_id: int, db: Session = Depends(get_db), user_id: int = Depends(auth.get_current_user_id)):
+def require_org_member(org_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     membership = db.query(models.OrganizationMember).filter_by(organization_id=org_id, user_id=user_id).first()
     if not membership:
         raise HTTPException(status_code=403, detail="Not a member of this organization")
     return membership
 
-def require_org_admin(org_id: int, db: Session = Depends(get_db), user_id: int = Depends(auth.get_current_user_id)):
+def require_org_admin(org_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     membership = db.query(models.OrganizationMember).filter_by(organization_id=org_id, user_id=user_id).first()
     if not membership or ("admin" not in membership.roles):
         raise HTTPException(status_code=403, detail="Not an admin of this organization")
@@ -26,7 +29,7 @@ def require_org_admin(org_id: int, db: Session = Depends(get_db), user_id: int =
 
 # --- Organization Routes ---
 @router.post("/", response_model=schemas.OrganizationOut)
-def create_organization(payload: schemas.OrganizationCreate, db: Session = Depends(get_db), user_id: int = Depends(auth.get_current_user_id)):
+def create_organization(payload: schemas.OrganizationCreate, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     # Check for duplicate organization name
     existing_org = db.query(models.Organization).filter_by(name=payload.name).first()
     if existing_org:
@@ -45,7 +48,7 @@ def create_organization(payload: schemas.OrganizationCreate, db: Session = Depen
     return org
 
 @router.get("/me", response_model=List[schemas.OrganizationWithRole])
-def list_my_organizations(db: Session = Depends(get_db), user_id: int = Depends(auth.get_current_user_id)):
+def list_my_organizations(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     memberships = db.query(models.OrganizationMember).filter_by(user_id=user_id).all()
     org_ids = [m.organization_id for m in memberships]
     orgs = db.query(models.Organization).filter(models.Organization.id.in_(org_ids)).all()
@@ -61,7 +64,7 @@ def list_my_organizations(db: Session = Depends(get_db), user_id: int = Depends(
     return result
 
 @router.get("/{org_id}", response_model=schemas.OrganizationWithMembers)
-def get_organization(org_id: int, db: Session = Depends(get_db), _=Depends(require_org_member), user_id: int = Depends(auth.get_current_user_id)):
+def get_organization(org_id: int, db: Session = Depends(get_db), _=Depends(require_org_member), user_id: int = Depends(get_current_user_id)):
     org = db.query(models.Organization).filter_by(id=org_id).first()
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
@@ -81,7 +84,7 @@ def get_organization(org_id: int, db: Session = Depends(get_db), _=Depends(requi
 @router.get("/", response_model=List[schemas.OrganizationOut])
 def list_organizations(
     db: Session = Depends(get_db),
-    user_id: int = Depends(auth.get_current_user_id),
+    user_id: int = Depends(get_current_user_id),
     include_mine: bool = Query(True, description="Include organizations you are already a member of")
 ):
     memberships = db.query(models.OrganizationMember).filter_by(user_id=user_id).all()
@@ -94,7 +97,7 @@ def list_organizations(
 
 # --- Membership Routes ---
 @router.post("/{org_id}/join")
-def join_organization(org_id: int, db: Session = Depends(get_db), user_id: int = Depends(auth.get_current_user_id)):
+def join_organization(org_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     org = db.query(models.Organization).filter_by(id=org_id).first()
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
@@ -148,7 +151,7 @@ def generate_invite_code(org_id: int, length: int = 6) -> str:
     return f"{org_id}-{code}"
 
 @router.get("/me/invites", response_model=List[schemas.OrganizationInviteOut])
-def list_user_invites(db: Session = Depends(get_db), user_id: int = Depends(auth.get_current_user_id)):
+def list_user_invites(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     # Only invites targeted to this user
     invites = db.query(models.OrganizationInvite).filter(
         models.OrganizationInvite.target_user_id == user_id
@@ -216,7 +219,7 @@ def revoke_invite(org_id: int, invite_id: int, db: Session = Depends(get_db), ad
     return {"detail": "Invite revoked"}
 
 @router.post("/invites/accept")
-def accept_invite(payload: schemas.OrganizationInviteAccept, db: Session = Depends(get_db), user_id: int = Depends(auth.get_current_user_id)):
+def accept_invite(payload: schemas.OrganizationInviteAccept, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     code = payload.code.strip()
     invite = db.query(models.OrganizationInvite).filter_by(code=code).first()
     if not invite:

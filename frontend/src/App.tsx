@@ -9,6 +9,9 @@ import { authStore } from "./store/authStore";
 import GithubCallbackPage from "./pages/GithubCallbackPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import LinkedGithubCallbackPage from "./pages/LinkedGithubCallbackPage";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminUsersPage from "./pages/AdminUsersPage";
+import AdminOrgsPage from "./pages/AdminOrgsPage";
 
 import "./index.css";
 import LandingPage from "./pages/LandingPage";
@@ -87,6 +90,16 @@ export default observer(function App() {
             </Route>
             <Route path="/dashboard">
               {authStore.user ? <HomePage /> : <AuthPage />}
+            </Route>
+            {/* Admin routes - protected */}
+            <Route path="/admin">
+              {authStore.user?.is_admin ? <AdminDashboard /> : <HomePage />}
+            </Route>
+            <Route path="/admin/users">
+              {authStore.user?.is_admin ? <AdminUsersPage /> : <HomePage />}
+            </Route>
+            <Route path="/admin/orgs">
+              {authStore.user?.is_admin ? <AdminOrgsPage /> : <HomePage />}
             </Route>
           </Switch>
         </main>

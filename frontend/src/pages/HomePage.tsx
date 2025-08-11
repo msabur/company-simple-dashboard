@@ -97,6 +97,14 @@ function DashboardTab({ setTab }: { setTab: (tab: string) => void }) {
           <div className="user-info-name">{authStore.user?.full_name}</div>
           <div className="user-info-username">{authStore.user?.username}</div>
           <div className="user-info-email">{authStore.user?.email}</div>
+          {/* Admin panel link for admin users */}
+          {authStore.user?.is_admin && (
+            <div style={{ marginTop: "1em" }}>
+              <a href="/admin" className="admin-switch-link" style={{ color: "#2563eb", fontWeight: "bold" }}>
+                Switch to Admin View
+              </a>
+            </div>
+          )}
         </div>
         <div className="dashboard-card dashboard-link-card" onClick={() => setTab("security")}> 
           <h3>

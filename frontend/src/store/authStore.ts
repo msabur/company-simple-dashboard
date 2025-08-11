@@ -14,6 +14,7 @@ export interface User {
   auth_provider: "local" | "github" | "google";
   organization?: string;
   roles: string[];
+  is_admin?: boolean;
 }
 
 class AuthStore {

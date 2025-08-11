@@ -5,8 +5,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine
+
 from routers.userRouter import router as user_router
 from routers.orgRouter import router as org_router
+from routers.adminRouter import router as admin_router
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -27,6 +29,8 @@ app.add_middleware(
     allow_headers=['*']
 )
 
+
 app.include_router(user_router)
 app.include_router(org_router)
+app.include_router(admin_router)
 

@@ -29,6 +29,7 @@ class User(Base):
 
     created_organizations = relationship("Organization", back_populates="created_by")
     organizations = relationship("OrganizationMember", back_populates="user", cascade="all, delete-orphan")
+    is_admin: Mapped[bool] = mapped_column(default=False)
     invites = relationship("OrganizationInvite", back_populates="target_user", cascade="all, delete-orphan")
     linked_accounts = relationship("LinkedAccount", back_populates="user", cascade="all, delete-orphan")
 

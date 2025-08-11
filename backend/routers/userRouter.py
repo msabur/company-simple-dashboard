@@ -8,6 +8,9 @@ from pydantic import EmailStr
 
 from config import GITHUB_CLIENT_SECRET, VITE_GITHUB_CLIENT_ID, PASSWORD_RESET_BASE_URL
 from helpers import emails, auth
+
+def get_current_user_id(user=Depends(auth.get_current_user)):
+    return user.id
 import models, schemas
 from database import get_db
 
@@ -209,7 +212,7 @@ def github_auth(payload: dict, db: Session = Depends(get_db)):
     return {"token": token, "user": UserOut.model_validate(db_user)}
 
 @router.post("/change-password")
-def change_password(payload: schemas.ChangePasswordRequest, db: Session = Depends(get_db), user_id: int = Depends(auth.get_current_user_id)):
+def change_password(payload: schemas.ChangePasswordRequest, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     db_user = db.query(models.User).filter_by(id=user_id).first()
     if not db_user or not db_user.password_hash:
         raise HTTPException(status_code=404, detail="User not found or password not set")
@@ -220,7 +223,7 @@ def change_password(payload: schemas.ChangePasswordRequest, db: Session = Depend
     return {"detail": "Password changed successfully"}
 
 @router.post("/update-info")
-def update_info(payload: schemas.UpdateInfoRequest, db: Session = Depends(get_db), user_id: int = Depends(auth.get_current_user_id)):
+def update_info(payload: schemas.UpdateInfoRequest, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     db_user = db.query(models.User).filter_by(id=user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -332,12 +335,12 @@ def reset_password(code: str, new_password: str, db: Session = Depends(get_db)):
     
     return {"detail":'Success'}
 @router.get("/linked-accounts", response_model=list[schemas.LinkedAccountOut])
-def list_linked_accounts(user_id: int = Depends(auth.get_current_user_id), db: Session = Depends(get_db)):
+def list_linked_accounts(user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
     accounts = db.query(models.LinkedAccount).filter_by(user_id=user_id).all()
     return accounts
 
 @router.post("/link-account")
-def link_account(payload: schemas.LinkAccountRequest, user_id: int = Depends(auth.get_current_user_id), db: Session = Depends(get_db)):
+def link_account(payload: schemas.LinkAccountRequest, user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
     provider = payload.provider
     token = payload.token
     # Check if already linked
@@ -406,7 +409,7 @@ def link_account(payload: schemas.LinkAccountRequest, user_id: int = Depends(aut
     return {"detail": f"{provider.capitalize()} account linked"}
 
 @router.post("/unlink-account")
-def unlink_account(payload: schemas.UnlinkAccountRequest, user_id: int = Depends(auth.get_current_user_id), db: Session = Depends(get_db)):
+def unlink_account(payload: schemas.UnlinkAccountRequest, user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
     account = db.query(models.LinkedAccount).filter_by(user_id=user_id, provider=payload.provider, email=payload.email).first()
     if not account:
         raise HTTPException(status_code=404, detail="Linked account not found")

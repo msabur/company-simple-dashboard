@@ -24,6 +24,7 @@ class UserOut(BaseModel):
     date_of_birth: datetime | None
     picture_url: str
     auth_provider: str
+    is_admin: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
