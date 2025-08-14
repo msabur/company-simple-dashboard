@@ -6,8 +6,8 @@ FROM node:20-alpine as build
 
 WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json* ./
-COPY frontend/ .
 COPY ./.env .
 RUN npm install
+COPY frontend/ .
 
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

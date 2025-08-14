@@ -5,13 +5,16 @@ import { fetchAdminOrgs, type AdminOrg, deleteAdminOrg, updateAdminOrg, fetchAdm
 function EditOrgModal({ org, onSave, onClose }: { org: AdminOrg, onSave: (data: Partial<AdminOrg>) => void, onClose: () => void }) {
   const [name, setName] = useState(org.name);
   return (
-    <div className="modal-backdrop">
-      <div className="modal">
+    <div className="admin-modal-backdrop">
+      <div className="admin-modal">
         <h3>Edit Organization</h3>
-        <label>Name: <input value={name} onChange={e => setName(e.target.value)} /></label><br />
-        <div style={{ marginTop: 12 }}>
-          <button onClick={() => onSave({ name })}>Save</button>
-          <button onClick={onClose} style={{ marginLeft: 8 }}>Cancel</button>
+        <div className="admin-form-group">
+          <label>Name</label>
+          <input value={name} onChange={e => setName(e.target.value)} />
+        </div>
+        <div className="admin-modal-footer">
+          <button className="admin-button admin-button-secondary" onClick={onClose}>Cancel</button>
+          <button className="admin-button admin-button-primary" onClick={() => onSave({ name })}>Save</button>
         </div>
       </div>
     </div>
@@ -30,15 +33,15 @@ function MembersModal({ org, onClose }: { org: AdminOrg, onClose: () => void }) 
       .finally(() => setLoading(false));
   }, [org.id]);
   return (
-    <div className="modal-backdrop">
-      <div className="modal">
+    <div className="admin-modal-backdrop">
+      <div className="admin-modal">
         <h3>Members of {org.name}</h3>
         {loading ? (
           <div>Loading...</div>
         ) : error ? (
           <div style={{ color: "red" }}>{error}</div>
         ) : (
-          <table>
+          <table className="admin-table">
             <thead>
               <tr>
                 <th>User ID</th>
@@ -59,8 +62,8 @@ function MembersModal({ org, onClose }: { org: AdminOrg, onClose: () => void }) 
             </tbody>
           </table>
         )}
-        <div style={{ marginTop: 12 }}>
-          <button onClick={onClose}>Close</button>
+        <div className="admin-modal-footer">
+          <button className="admin-button admin-button-secondary" onClick={onClose}>Close</button>
         </div>
       </div>
     </div>
@@ -121,7 +124,7 @@ export default function AdminOrgsPage() {
       ) : error ? (
         <div style={{ color: "red" }}>{error}</div>
       ) : (
-        <table>
+        <table className="admin-table">
           <thead>
             <tr>
               <th>Name</th>
@@ -139,60 +142,36 @@ export default function AdminOrgsPage() {
                 <td>{o.created_at?.slice(0, 19).replace("T", " ")}</td>
                 <td>{o.member_count}</td>
                 <td>
-                  <button onClick={() => handleEdit(o)}>Edit</button>{" "}
-                  <button onClick={() => handleDelete(o)} style={{ color: "red" }}>Delete</button>{" "}
-                  <button onClick={() => handleViewMembers(o)}>Members</button>
+                  <button className="admin-button" onClick={() => handleEdit(o)}>Edit</button>
+                  <button className="admin-button admin-button-danger" onClick={() => handleDelete(o)}>Delete</button>
+                  <button className="admin-button" onClick={() => handleViewMembers(o)}>Members</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+
       {editOrg && (
         <EditOrgModal org={editOrg} onSave={doEdit} onClose={() => setEditOrg(null)} />
       )}
+
       {confirm && (
-        <div className="modal-backdrop">
-          <div className="modal">
+        <div className="admin-modal-backdrop">
+          <div className="admin-modal">
             <h3>Confirm Delete</h3>
             <p>Are you sure you want to delete organization '{confirm.name}'?</p>
-            <button onClick={doDelete}>Yes</button>
-            <button onClick={() => setConfirm(null)} style={{ marginLeft: 8 }}>Cancel</button>
+            <div className="admin-modal-footer">
+              <button className="admin-button admin-button-secondary" onClick={() => setConfirm(null)}>Cancel</button>
+              <button className="admin-button admin-button-danger" onClick={doDelete}>Delete</button>
+            </div>
           </div>
         </div>
       )}
+
       {membersOrg && (
         <MembersModal org={membersOrg} onClose={() => setMembersOrg(null)} />
       )}
-      <style>{`
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 20px;
-        }
-        th, td {
-          text-align: left;
-          padding: 8px;
-          border-bottom: 1px solid #ddd;
-        }
-        .modal-backdrop {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .modal {
-          background: white;
-          padding: 20px;
-          border-radius: 4px;
-          min-width: 300px;
-        }
-      `}</style>
     </AdminLayout>
   );
 }

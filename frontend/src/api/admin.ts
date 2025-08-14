@@ -120,3 +120,31 @@ export async function resetAdminUserPassword(userId: number) {
   if (!res.ok) throw new Error("Failed to reset password");
   return res.json();
 }
+
+export async function sendPasswordResetEmail(email: string) {
+  const res = await fetch(`${BASE_URL}/send-password-reset-email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) throw new Error("Failed to send password reset email");
+  return res.json();
+}
+
+export async function fetchTopOrgs(limit = 5) {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${BASE_URL}/admin/stats/top-orgs?limit=${limit}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+  if (!res.ok) throw new Error("Failed to fetch top organizations");
+  return res.json();
+}
+
+export async function fetchEmailTemplates() {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${BASE_URL}/admin/email-templates`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+  if (!res.ok) throw new Error("Failed to fetch email templates");
+  return res.json();
+}

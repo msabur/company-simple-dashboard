@@ -12,6 +12,7 @@ import LinkedGithubCallbackPage from "./pages/LinkedGithubCallbackPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminOrgsPage from "./pages/AdminOrgsPage";
+import AdminEmailTemplates from "./pages/AdminEmailTemplates";
 
 import "./index.css";
 import LandingPage from "./pages/LandingPage";
@@ -100,6 +101,9 @@ export default observer(function App() {
             </Route>
             <Route path="/admin/orgs">
               {authStore.user?.is_admin ? <AdminOrgsPage /> : <HomePage />}
+            </Route>
+            <Route path="/admin/email-templates">
+              {authStore.user?.is_admin ? <AdminEmailTemplates /> : <HomePage />}
             </Route>
           </Switch>
         </main>

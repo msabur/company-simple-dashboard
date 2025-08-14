@@ -3,6 +3,8 @@ Admin router for global admin interface (user/org management)
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
+from sqlalchemy import func
+import os
 from database import get_db
 from helpers.admin_auth import admin_required
 from models import User, Organization
@@ -202,3 +204,40 @@ def remove_org_member(org_id: int, user_id: int, db: Session = Depends(get_db), 
     db.delete(member)
     db.commit()
     return {"success": True}
+
+# Top organizations by member count
+@router.get("/stats/top-orgs")
+def top_organizations(limit: int = 5, db: Session = Depends(get_db), current_user=Depends(admin_required)):
+    from models import OrganizationMember
+    q = db.query(Organization, func.count(OrganizationMember.id).label("member_count"))\
+        .join(OrganizationMember, Organization.id == OrganizationMember.organization_id)\
+        .group_by(Organization.id)\
+        .order_by(func.count(OrganizationMember.id).desc())\
+        .limit(limit)
+    results = q.all()
+    return [{
+        "id": org.id,
+        "name": org.name,
+        "member_count": int(member_count)
+    } for org, member_count in results]
+
+# Email templates preview (reads raw template files)
+@router.get("/email-templates")
+def email_templates(db: Session = Depends(get_db), current_user=Depends(admin_required)):
+    templates_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
+    # fallback to project root templates
+    if not os.path.isdir(templates_dir):
+        templates_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "templates")
+    result = {}
+    try:
+        files = [f for f in os.listdir(templates_dir) if f.endswith('.jinja2')]
+    except Exception:
+        files = []
+    for fname in files:
+        path = os.path.join(templates_dir, fname)
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                result[fname] = f.read()
+        except Exception:
+            result[fname] = "(not available)"
+    return result
