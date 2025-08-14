@@ -194,26 +194,31 @@
 :root {
   --card-bg: white;
   --card-color: #111827;
+  --card-subtle: #6b7280;
+  --card-accent: #0b5fff; /* primary accent for numbers */
 }
 
 .dark-theme {
   --card-bg: #111827;
   --card-color: #e6e6e6;
+  --card-subtle: #9ca3af;
+  --card-accent: #60a5fa;
 }
 
 .card {
   background: var(--card-bg);
   color: var(--card-color);
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .stat {
   font-size: 28px;
   font-weight: 700;
-  color: #111827;
+  color: var(--card-accent);
 }
 
 .stat-label {
-  color: #6b7280;
+  color: var(--card-subtle);
   margin-top: 6px;
   font-size: 14px;
 }
@@ -221,6 +226,19 @@
 /* small adjustments to table action buttons */
 .admin-table td .admin-button {
   margin-right: 8px;
+}
+
+/* ensure links inside cards follow theme */
+.card a {
+  color: var(--card-accent);
+}
+
+/* slightly stronger shadow in light mode, subtler in dark */
+.card {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.dark-theme .card {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
 /* tighten table action buttons and prevent wrapping for phone/actions */
